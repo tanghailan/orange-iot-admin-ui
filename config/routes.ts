@@ -25,18 +25,6 @@ export default [
         redirect: '/user/login',
       },
       {
-        name: 'register-result',
-        icon: 'checkCircle',
-        path: '/user/register-result',
-        component: './user/register-result',
-      },
-      {
-        name: 'register',
-        icon: 'userAdd',
-        path: '/user/register',
-        component: './user/register',
-      },
-      {
         name: '404',
         component: './exception/404',
         path: '/user/*',
@@ -44,187 +32,108 @@ export default [
     ],
   },
   {
-    path: '/welcome',
-    name: 'welcome',
-    icon: 'home',
-    component: './Welcome',
+    path: '/iot',
+    name: 'iot',
+    icon: 'cloud',
+    routes: [
+      {
+        path: '/iot',
+        redirect: '/iot/dashboard',
+      },
+      {
+        name: 'dashboard',
+        icon: 'dashboard',
+        path: '/iot/dashboard',
+        component: './iot/dashboard',
+        access: 'canViewDashboard',
+      },
+      {
+        path: '/iot/products',
+        component: './iot/products',
+        name: 'products',
+        access: 'canViewProducts',
+      },
+      {
+        path: '/iot/devices',
+        component: './iot/devices',
+        name: 'devices',
+        access: 'canViewDevices',
+      },
+    ],
+  },
+  {
+    path: '/operations',
+    name: 'operations',
+    icon: 'lineChart',
+    routes: [
+      {
+        path: '/operations',
+        redirect: '/operations/messages',
+      },
+      {
+        name: 'messages',
+        path: '/operations/messages',
+        component: './iot/messages',
+        access: 'canViewMessages',
+      },
+      {
+        name: 'firmware',
+        path: '/operations/firmware',
+        component: './iot/firmware',
+        access: 'canViewFirmware',
+      },
+      {
+        name: 'scheduledJobs',
+        path: '/operations/scheduled-jobs',
+        component: './iot/scheduled-jobs',
+        access: 'canViewScheduledJobs',
+      },
+      {
+        name: 'mqtt',
+        path: '/operations/mqtt',
+        component: './monitor/mqtt',
+        access: 'canViewMqttMonitor',
+      },
+    ],
   },
   {
     path: '/admin',
-    name: 'admin',
-    icon: 'crown',
-    access: 'canAdmin',
+    name: 'platform',
+    icon: 'setting',
     routes: [
       {
         path: '/admin',
-        redirect: '/admin/sub-page',
+        redirect: '/admin/users',
       },
       {
-        path: '/admin/sub-page',
-        name: 'sub-page',
-        component: './Admin',
-      },
-    ],
-  },
-  {
-    path: '/dashboard',
-    name: 'dashboard',
-    icon: 'dashboard',
-    routes: [
-      {
-        path: '/dashboard',
-        redirect: '/dashboard/analysis',
+        name: 'users',
+        path: '/admin/users',
+        component: './admin/users',
+        access: 'canViewAdminUsers',
       },
       {
-        name: 'analysis',
-        icon: 'barChart',
-        path: '/dashboard/analysis',
-        component: './dashboard/analysis',
+        name: 'roles',
+        path: '/admin/roles',
+        component: './admin/roles',
+        access: 'canViewAdminRoles',
       },
       {
-        name: 'monitor',
-        icon: 'monitor',
-        path: '/dashboard/monitor',
-        component: './dashboard/monitor',
+        name: 'menus',
+        path: '/admin/menus',
+        component: './admin/menus',
+        access: 'canViewAdminMenus',
       },
       {
-        name: 'workplace',
-        icon: 'desktop',
-        path: '/dashboard/workplace',
-        component: './dashboard/workplace',
-      },
-    ],
-  },
-  {
-    path: '/form',
-    icon: 'form',
-    name: 'form',
-    routes: [
-      {
-        path: '/form',
-        redirect: '/form/basic-form',
+        name: 'permissions',
+        path: '/admin/permissions',
+        component: './admin/permissions',
+        access: 'canViewAdminPermissions',
       },
       {
-        name: 'basic-form',
-        icon: 'form',
-        path: '/form/basic-form',
-        component: './form/basic-form',
-      },
-      {
-        name: 'step-form',
-        icon: 'orderedList',
-        path: '/form/step-form',
-        component: './form/step-form',
-      },
-      {
-        name: 'advanced-form',
-        icon: 'profile',
-        path: '/form/advanced-form',
-        component: './form/advanced-form',
-      },
-    ],
-  },
-  {
-    path: '/list',
-    icon: 'table',
-    name: 'list',
-    routes: [
-      {
-        path: '/list/search',
-        name: 'search-list',
-        component: './list/search',
-        routes: [
-          {
-            path: '/list/search',
-            redirect: '/list/search/articles',
-          },
-          {
-            name: 'articles',
-            icon: 'read',
-            path: '/list/search/articles',
-            component: './list/search/articles',
-          },
-          {
-            name: 'projects',
-            icon: 'project',
-            path: '/list/search/projects',
-            component: './list/search/projects',
-          },
-          {
-            name: 'applications',
-            icon: 'appstore',
-            path: '/list/search/applications',
-            component: './list/search/applications',
-          },
-        ],
-      },
-      {
-        path: '/list',
-        redirect: '/list/table-list',
-      },
-      {
-        name: 'table-list',
-        icon: 'table',
-        path: '/list/table-list',
-        component: './table-list',
-      },
-      {
-        name: 'basic-list',
-        icon: 'unorderedList',
-        path: '/list/basic-list',
-        component: './list/basic-list',
-      },
-      {
-        name: 'card-list',
-        icon: 'creditCard',
-        path: '/list/card-list',
-        component: './list/card-list',
-      },
-    ],
-  },
-  {
-    path: '/profile',
-    name: 'profile',
-    icon: 'profile',
-    routes: [
-      {
-        path: '/profile',
-        redirect: '/profile/basic',
-      },
-      {
-        name: 'basic',
-        icon: 'idcard',
-        path: '/profile/basic',
-        component: './profile/basic',
-      },
-      {
-        name: 'advanced',
-        icon: 'crown',
-        path: '/profile/advanced',
-        component: './profile/advanced',
-      },
-    ],
-  },
-  {
-    name: 'result',
-    icon: 'checkCircle',
-    path: '/result',
-    routes: [
-      {
-        path: '/result',
-        redirect: '/result/success',
-      },
-      {
-        name: 'success',
-        icon: 'checkCircle',
-        path: '/result/success',
-        component: './result/success',
-      },
-      {
-        name: 'fail',
-        icon: 'closeCircle',
-        path: '/result/fail',
-        component: './result/fail',
+        name: 'systemConfigs',
+        path: '/admin/system-configs',
+        component: './iot/system-config',
+        access: 'canViewSystemConfigs',
       },
     ],
   },
@@ -232,6 +141,7 @@ export default [
     name: 'exception',
     icon: 'warning',
     path: '/exception',
+    hideInMenu: true,
     routes: [
       {
         path: '/exception',
@@ -258,37 +168,8 @@ export default [
     ],
   },
   {
-    name: 'account',
-    icon: 'user',
-    path: '/account',
-    routes: [
-      {
-        path: '/account',
-        redirect: '/account/center',
-      },
-      {
-        name: 'center',
-        icon: 'user',
-        path: '/account/center',
-        component: './account/center',
-      },
-      {
-        name: 'settings',
-        icon: 'setting',
-        path: '/account/settings',
-        component: './account/settings',
-      },
-    ],
-  },
-  {
-    path: '/chatbot',
-    name: 'chatbot',
-    icon: 'robot',
-    component: './chatbot',
-  },
-  {
     path: '/',
-    redirect: '/dashboard/analysis',
+    redirect: '/iot/dashboard',
   },
   {
     component: './exception/404',

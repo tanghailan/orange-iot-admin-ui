@@ -8,6 +8,10 @@ import proxy from './proxy';
 import routes from './routes';
 
 const { UMI_ENV = 'dev' } = process.env;
+const adminApiTarget = process.env.IOT_ADMIN_API_URL || 'http://localhost:8811';
+const openApiDocsUrl =
+  process.env.IOT_OPENAPI_DOCS_URL ||
+  `${adminApiTarget.replace(/\/$/, '')}/doc.html`;
 
 // Compute commit hash: env vars take precedence, fall back to git at build time
 const commitHash =
@@ -114,9 +118,10 @@ export default defineConfig({
    * @name layout 插件
    * @doc https://umijs.org/docs/max/layout-menu
    */
-  title: 'Ant Design Pro',
+  title: 'Orange IoT 管理平台',
   layout: {
-    locale: true,
+    // 多语言尚未完整接入，暂不展示语言切换入口。
+    locale: false,
     ...defaultSettings,
   },
   /**
@@ -174,14 +179,6 @@ export default defineConfig({
    */
   access: {},
   /**
-   * @name Google Analytics
-   * @description 使用 GA4 (gtag.js) 进行站点分析
-   * @doc https://umijs.org/docs/max/analytics
-   */
-  analytics: {
-    ga_v2: 'G-59NF1VHHPF',
-  },
-  /**
    * @name <head> 中额外的 script
    * @description 配置 <head> 中额外的 script
    */
@@ -191,22 +188,7 @@ export default defineConfig({
   ],
 
   //================ pro 插件配置 =================
-  plugins: ['@umijs/max-plugin-openapi', '@umijs/request-record'],
-
-  /**
-   * @name openAPI 插件的配置
-   * @description 基于 openapi 的规范生成serve 和mock，能减少很多样板代码
-   * @doc https://pro.ant.design/zh-cn/docs/openapi/
-   */
-  openAPI: [
-    {
-      requestLibPath: "import { request } from '@umijs/max'",
-      // 或者使用在线的版本
-      // schemaPath: "https://gw.alipayobjects.com/os/antfincdn/M%24jrzTTYJN/oneapi.json"
-      schemaPath: join(__dirname, 'oneapi.json'),
-      mock: false,
-    },
-  ],
+  plugins: ['@umijs/request-record'],
 
   tailwindcss: {},
 
@@ -229,6 +211,7 @@ export default defineConfig({
   define: {
     'process.env.CI': process.env.CI,
     'process.env.COMMIT_HASH': commitHash,
+    __ORANGE_IOT_OPENAPI_DOCS_URL__: JSON.stringify(openApiDocsUrl),
     __APP_VERSION__: require('./../package.json').version,
     __UMI_VERSION__: require('@umijs/max/package.json').version,
     __UTOO_VERSION__: require('@utoo/pack/package.json').version,

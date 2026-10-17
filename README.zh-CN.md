@@ -1,161 +1,62 @@
-Language : [English](./README.md) | 简体中文
+# Orange IoT 管理前端
 
-<h1 align="center">Ant Design Pro</h1>
+Orange IoT 平台的 React 管理控制台。
 
-<div align="center">
+## 功能
 
-开箱即用的中台前端/设计解决方案。
+- IoT 运行概览与 MQTT Stream 积压监控
+- 产品和设备管理
+- 固件上传及发布状态管理
+- 设备指令下发、指令历史和消息历史，支持从已发布固件生成升级载荷
+- 系统配置和定时任务管理
+- 基于权限码控制菜单和操作入口
+- 基于 Sa-Token 的管理端登录与退出
 
-[![CI](https://github.com/ant-design/ant-design-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/ant-design/ant-design-pro/actions/workflows/ci.yml)
-[![GitHub release](https://img.shields.io/github/v/release/ant-design/ant-design-pro.svg)](https://github.com/ant-design/ant-design-pro/releases)
-[![Build With Utoo](https://img.shields.io/badge/build%20with-utoo-028fe4.svg)](https://utoo.land)
-[![Build With Umi](https://img.shields.io/badge/build%20with-umi-028fe4.svg)](https://umijs.org/)
-[![Checked with Biome](https://img.shields.io/badge/Checked_with-Biome-60a5fa?style=flat&logo=biome)](https://biomejs.dev)
-[![Ant Design](https://badgen.net/badge/icon/Ant%20Design?icon=https://gw.alipayobjects.com/zos/antfincdn/Pp4WPgVDB3/KDpgvguMpGfqaHPjicRK.svg&label)](https://ant.design/)
+## 环境要求
 
-![](https://github.com/user-attachments/assets/fde29061-3d9a-4397-8ac2-397b0e033ef5)
+- Node.js 22 或更高版本
+- npm
 
-</div>
+## 本地开发
 
-- 预览：https://preview.pro.ant.design
-- 使用文档：[docs/cheatsheet.zh-CN.md](./docs/cheatsheet.zh-CN.md)
-- 更新日志: https://github.com/ant-design/ant-design-pro/releases
-- 常见问题：[docs/cheatsheet.zh-CN.md#faq](./docs/cheatsheet.zh-CN.md#faq)
-- **v6 正式发布！** — [查看 v6 更新内容](https://github.com/ant-design/ant-design-pro/releases/tag/v6.0.0)
-
-## 特性
-
-- :bulb: **TypeScript**: 应用程序级 JavaScript 的语言
-- :scroll: **区块**: 通过区块模板快速构建页面
-- :gem: **优雅美观**：基于 [Ant Design 6](https://ant.design/) 体系精心设计
-- :triangular_ruler: **常见设计模式**：提炼自中后台应用的典型页面和场景
-- :rocket: **最新技术栈**：使用 React 19/[Umi Max 4](https://umijs.org/)/[antd 6](https://ant.design/)/[utoopack](https://utoo.land) 等前端前沿技术开发
-- :iphone: **响应式**：针对不同屏幕大小设计
-- :art: **主题**：基于 [Tailwind CSS v4](https://tailwindcss.com/) + [antd-style](https://github.com/ant-design/antd-style) 的可配置主题满足多样化品牌诉求
-- :globe_with_meridians: **国际化**：内建业界通用的国际化方案
-- :gear: **最佳实践**：良好的工程实践助您持续产出高质量代码
-- :1234: **Mock 数据**：实用的本地数据调试方案
-- :robot: **AI 助手**：内置 AI 聊天助手页面，基于 [Ant Design X](https://x.ant.design/)
-- :white_check_mark: **UI 测试**：自动化测试保障前端产品质量
-
-## 模板
-
-```
-- 欢迎页
-- Dashboard
-  - 分析页
-  - 监控页
-  - 工作台
-- 表单页
-  - 基础表单页
-  - 分步表单页
-  - 高级表单页
-- 列表页
-  - 搜索列表（文章/项目/应用）
-  - 查询表格
-  - 标准列表
-  - 卡片列表
-- 详情页
-  - 基础详情页
-  - 高级详情页
-- 结果
-  - 成功页
-  - 失败页
-- 异常
-  - 403 无权限
-  - 404 找不到
-  - 500 服务器出错
-- 用户
-  - 用户中心页
-  - 用户设置页
-- AI 助手
-- 账户
-  - 登录
-  - 注册
-  - 注册成功
-```
-
-## 使用
-
-### 开始使用
-
-克隆或下载本项目到本地：
+安装依赖并启动前端：
 
 ```bash
-git clone --depth=1 https://github.com/ant-design/ant-design-pro.git myapp
-cd myapp
+npm ci
+npm run dev
 ```
 
-### 安装依赖
+开发代理会将 `/admin/*` 请求转发到 Admin 服务，并改写为 `/api/v1/admin/*`。默认目标地址为 `http://localhost:8811`。如需连接其他 Admin 服务，可设置 `IOT_ADMIN_API_URL`：
 
 ```bash
-npm install
+IOT_ADMIN_API_URL=http://localhost:8811 npm run dev
 ```
 
-### 开发
+`start:test` 和 `start:pre` 使用相同的代理目标及路径改写。
+
+开发环境右上角的 `OpenAPI 文档` 入口直接打开 Admin 服务的 Knife4j 文档，默认地址为
+`http://localhost:8811/doc.html`。如需使用其他地址，可设置 `IOT_OPENAPI_DOCS_URL`：
 
 ```bash
-# 启动开发服务器（默认为完整版）
-npm start
+IOT_OPENAPI_DOCS_URL=http://localhost:8811/doc.html npm run dev
 ```
 
-### 精简为简单版本
+后端原始 OpenAPI 定义地址为 `http://localhost:8811/v3/api-docs/admin`。
 
-本项目默认包含所有区块。如果你需要一个最小化的版本，运行：
+## 生产部署
 
-```bash
-npm run simple
-```
-
-这将会：
-- 删除多余的页面目录（dashboard、form、list/*、profile、result、exception、account 等）
-- 删除多余的 mock 文件
-- 替换路由为简单版本
-- 从 package.json 中移除多余的依赖
-
-**注意**：此操作不可逆，将永久删除文件。
-
-### 构建
+构建静态前端：
 
 ```bash
 npm run build
 ```
 
-更多信息请参考 [使用文档](./docs/cheatsheet.zh-CN.md)。
+Umi 代理只在开发时生效。生产环境需在 Web 服务器或 Ingress 中配置同源转发：将 `/admin/` 请求转发到 Admin 服务的 `/api/v1/admin/`。浏览器会保存 Sa-Token 访问令牌，并通过 `Authorization` 请求头发送。
 
-## AI Skills（Claude Code）
+## 目录结构
 
-本项目内置了两个 [Claude Code Skills](https://docs.anthropic.com/en/docs/claude-code/skills)，位于 `.claude/skills/` 目录下：
-
-| Skill | 触发词 | 说明 |
-|---|---|---|
-| `/pro-upgrade` | "升级"、"upgrade pro"、"update to latest" | 自动升级到最新 Ant Design Pro 版本。对比最新模板差异，合并框架变更并保留业务代码。 |
-| `/antd` | antd 相关代码或问题 | 查询 antd 组件 API、props、token、demo；检查废弃用法；跨版本迁移 — 基于 `@ant-design/cli`。 |
-
-**在 Claude Code 中使用：**
-
-```bash
-# 升级项目到最新 Pro 版本
-/pro-upgrade
-
-# 查询 antd 组件信息、调试问题、运行 lint 等
-/antd
-```
-
-> 💡 如果你的项目是从本仓库克隆的，这些 skill 已经内置，无需额外安装。如需获取最新 skill 定义，可以从模板拉取更新或运行 `npx skills add ant-design/ant-design-pro` 刷新。
-
-## 支持环境
-
-现代浏览器。
-
-| [<img src="https://raw.githubusercontent.com/alrra/browser-logos/master/src/edge/edge_48x48.png" alt="Edge" width="24px" height="24px" />](http://godban.github.io/browsers-support-badges/)</br>Edge | [<img src="https://raw.githubusercontent.com/alrra/browser-logos/master/src/firefox/firefox_48x48.png" alt="Firefox" width="24px" height="24px" />](http://godban.github.io/browsers-support-badges/)</br>Firefox | [<img src="https://raw.githubusercontent.com/alrra/browser-logos/master/src/chrome/chrome_48x48.png" alt="Chrome" width="24px" height="24px" />](http://godban.github.io/browsers-support-badges/)</br>Chrome | [<img src="https://raw.githubusercontent.com/alrra/browser-logos/master/src/safari/safari_48x48.png" alt="Safari" width="24px" height="24px" />](http://godban.github.io/browsers-support-badges/)</br>Safari |
-| --- | --- | --- | --- |
-| Edge | last 2 versions | last 2 versions | last 2 versions |
-
-## 参与贡献
-
-我们非常欢迎你的贡献，你可以通过以下方式和我们一起共建 :smiley:：
-
-- 在你的公司或个人项目中使用 Ant Design Pro。
-- 通过 [Issue](http://github.com/ant-design/ant-design-pro/issues) 报告 bug 或进行咨询。
-- 提交 [Pull Request](http://github.com/ant-design/ant-design-pro/pulls) 改进 Pro 的代码。
+- `src/pages/iot`：概览、产品、设备、固件、指令/消息、定时任务和系统配置页面
+- `src/pages/monitor`：MQTT Stream 监控
+- `src/services/iot`：Admin API 客户端
+- `config/routes.ts`：应用路由和导航
+- `config/proxy.ts`：开发及预发布代理

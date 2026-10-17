@@ -1,13 +1,9 @@
-import {
-  LogoutOutlined,
-  SettingOutlined,
-  SkinOutlined,
-} from '@ant-design/icons';
+import { LogoutOutlined, SkinOutlined } from '@ant-design/icons';
 import { history, useModel } from '@umijs/max';
 import type { MenuProps } from 'antd';
 import { Spin } from 'antd';
-import React, { startTransition } from 'react';
-import { outLogin } from '@/services/ant-design-pro/api';
+import React from 'react';
+import { adminLogout } from '@/services/iot/auth';
 import HeaderDropdown from '../HeaderDropdown';
 
 type GlobalHeaderRightProps = {
@@ -15,11 +11,6 @@ type GlobalHeaderRightProps = {
 };
 
 const menuItems: MenuProps['items'] = [
-  {
-    key: 'settings',
-    icon: <SettingOutlined />,
-    label: '个人设置',
-  },
   {
     key: 'theme',
     icon: <SkinOutlined />,
@@ -37,21 +28,16 @@ const menuItems: MenuProps['items'] = [
 
 const loginOut = async () => {
   try {
-    await outLogin();
+    await adminLogout();
   } catch {
-    // Local logout has already cleared user state; redirect should still proceed.
+    // Clear the local session even when the server session already expired.
+  } finally {
+    localStorage.removeItem('iot_admin_token');
   }
-  const { search, pathname } = window.location;
-  const urlParams = new URL(window.location.href).searchParams;
-  const searchParams = new URLSearchParams({
-    redirect: pathname + search,
-  });
-  const redirect = urlParams.get('redirect');
-  if (window.location.pathname !== '/user/login' && !redirect) {
-    history.replace({
-      pathname: '/user/login',
-      search: searchParams.toString(),
-    });
+  const { pathname, search, hash } = history.location;
+  if (pathname !== '/user/login') {
+    const redirect = encodeURIComponent(pathname + search + hash);
+    history.replace(`/user/login?redirect=${redirect}`);
   }
 };
 
@@ -63,17 +49,18 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
   const onMenuClick: MenuProps['onClick'] = (event) => {
     const { key } = event;
     if (key === 'logout') {
-      startTransition(() => {
-        setInitialState((s) => ({ ...s, currentUser: undefined }));
-      });
-      loginOut();
+      setInitialState((state) => ({
+        ...state,
+        currentUser: undefined,
+        accessCodes: [],
+      }));
+      void loginOut();
       return;
     }
     if (key === 'theme') {
       setInitialState((s) => ({ ...s, settingDrawerOpen: true }));
       return;
     }
-    history.push(`/account/${key}`);
   };
 
   if (!initialState) {

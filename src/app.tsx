@@ -1,5 +1,24 @@
-import { LinkOutlined } from '@ant-design/icons';
-import type { Settings as LayoutSettings } from '@ant-design/pro-components';
+import {
+  ApiOutlined,
+  AppstoreOutlined,
+  CloudOutlined,
+  DashboardOutlined,
+  DownloadOutlined,
+  LineChartOutlined,
+  LinkOutlined,
+  MenuOutlined,
+  MessageOutlined,
+  MobileOutlined,
+  SafetyOutlined,
+  ScheduleOutlined,
+  SettingOutlined,
+  TeamOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
+import type {
+  Settings as LayoutSettings,
+  MenuDataItem,
+} from '@ant-design/pro-components';
 import { SettingDrawer } from '@ant-design/pro-components';
 import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
 import { history, Link } from '@umijs/max';
@@ -12,19 +31,66 @@ dayjs.extend(relativeTime);
 
 import {
   AvatarDropdown,
-  DocLink,
   ErrorBoundary,
   Footer,
-  LangDropdown,
   OfflineBanner,
-  VersionDropdown,
 } from '@/components';
-import { currentUser as queryCurrentUser } from '@/services/ant-design-pro/api';
+import {
+  getCurrentAccessCodes,
+  getCurrentMenus,
+  getCurrentUserInfo,
+} from '@/services/iot';
 import defaultSettings from '../config/defaultSettings';
 import { errorConfig } from './requestErrorConfig';
 
 const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/user/login';
+
+const firstMenuPath = (
+  menus: API.AdminMenuResponse[] = [],
+): string | undefined => {
+  for (const menu of menus) {
+    if (menu.path) return menu.path;
+    const childPath = firstMenuPath(menu.children);
+    if (childPath) return childPath;
+  }
+  return undefined;
+};
+
+const hasMenuPath = (
+  menus: API.AdminMenuResponse[] = [],
+  path: string,
+): boolean =>
+  menus.some((menu) => menu.path === path || hasMenuPath(menu.children, path));
+
+const menuIconMap: Record<string, React.ComponentType> = {
+  api: ApiOutlined,
+  appstore: AppstoreOutlined,
+  cloud: CloudOutlined,
+  dashboard: DashboardOutlined,
+  download: DownloadOutlined,
+  lineChart: LineChartOutlined,
+  menu: MenuOutlined,
+  message: MessageOutlined,
+  mobile: MobileOutlined,
+  safety: SafetyOutlined,
+  schedule: ScheduleOutlined,
+  setting: SettingOutlined,
+  team: TeamOutlined,
+  user: UserOutlined,
+};
+
+const mapMenuIcons = (menus: API.AdminMenuResponse[] = []): MenuDataItem[] =>
+  menus.map((menu): MenuDataItem => {
+    const Icon = menu.icon ? menuIconMap[menu.icon] : undefined;
+    return {
+      ...menu,
+      // ProLayout/Ant Menu uses key to track selected and expanded nodes.
+      key: menu.menuCode,
+      icon: Icon ? <Icon /> : undefined,
+      children: mapMenuIcons(menu.children),
+    };
+  });
 
 /**
  * @see https://umijs.org/docs/api/runtime-config#getinitialstate
@@ -32,23 +98,55 @@ const loginPath = '/user/login';
 export async function getInitialState(): Promise<{
   settings?: Partial<LayoutSettings>;
   currentUser?: API.CurrentUser;
+  accessCodes?: string[];
+  menus?: API.AdminMenuResponse[];
   loading?: boolean;
   fetchUserInfo?: () => Promise<API.CurrentUser | undefined>;
+  fetchAccessCodes?: () => Promise<string[]>;
+  fetchMenus?: () => Promise<API.AdminMenuResponse[]>;
   settingDrawerOpen?: boolean;
 }> {
   const fetchUserInfo = async () => {
     try {
-      const msg = await queryCurrentUser({
+      const msg = await getCurrentUserInfo({
         skipErrorHandler: true,
       });
-      return msg.data;
+
+      // 检查响应是否成功 (code === 0)
+      if (msg.code === 0 && msg.data) {
+        const user = msg.data;
+        return {
+          ...user,
+          name: user.realName || user.username,
+          access: user.roles?.includes('super_admin') ? 'admin' : 'user',
+        } as API.CurrentUser;
+      }
+      return undefined;
     } catch (_error) {
       const { pathname, search, hash } = history.location;
-      history.replace(
-        `${loginPath}?redirect=${encodeURIComponent(pathname + search + hash)}`,
-      );
+      if (pathname !== loginPath) {
+        history.replace(
+          `${loginPath}?redirect=${encodeURIComponent(pathname + search + hash)}`,
+        );
+      }
     }
     return undefined;
+  };
+  const fetchAccessCodes = async () => {
+    try {
+      const response = await getCurrentAccessCodes({ skipErrorHandler: true });
+      return response.code === 0 ? response.data || [] : [];
+    } catch {
+      return [];
+    }
+  };
+  const fetchMenus = async () => {
+    try {
+      const response = await getCurrentMenus({ skipErrorHandler: true });
+      return response.code === 0 ? response.data || [] : [];
+    } catch {
+      return [];
+    }
   };
   // 如果不是登录页面，执行
   const { location } = history;
@@ -58,15 +156,25 @@ export async function getInitialState(): Promise<{
     )
   ) {
     const currentUser = await fetchUserInfo();
+    const accessCodes = currentUser ? await fetchAccessCodes() : [];
+    const menus = currentUser ? await fetchMenus() : [];
     return {
       fetchUserInfo,
+      fetchAccessCodes,
+      fetchMenus,
       currentUser,
+      accessCodes,
+      menus,
       settings: defaultSettings as Partial<LayoutSettings>,
       settingDrawerOpen: false,
     };
   }
   return {
     fetchUserInfo,
+    fetchAccessCodes,
+    fetchMenus,
+    accessCodes: [],
+    menus: [],
     settings: defaultSettings as Partial<LayoutSettings>,
     settingDrawerOpen: false,
   };
@@ -88,20 +196,11 @@ export const layout: RunTimeLayoutConfig = ({
       }
       return dom;
     },
-    actionsRender: () => {
-      // `locale: false` opts out of the language switcher. ProLayout's own
-      // `locale` prop is a locale string, so narrow to the boolean toggle here.
-      const localeEnabled =
-        (initialState?.settings as { locale?: boolean })?.locale !== false;
-      return [
-        <DocLink key="doc" />,
-        <VersionDropdown key="version" />,
-        localeEnabled && <LangDropdown key="lang" />,
-      ].filter(Boolean);
-    },
+    menuDataRender: () => mapMenuIcons(initialState?.menus),
+    actionsRender: () => [],
     avatarProps: {
       src: initialState?.currentUser?.avatar,
-      title: 'ProUser',
+      title: initialState?.currentUser?.name || '管理用户',
       render: (_, avatarChildren) => (
         <AvatarDropdown>{avatarChildren}</AvatarDropdown>
       ),
@@ -117,34 +216,30 @@ export const layout: RunTimeLayoutConfig = ({
         history.replace(
           `${loginPath}?redirect=${encodeURIComponent(location.pathname + location.search + location.hash)}`,
         );
+        return;
+      }
+      if (
+        initialState?.currentUser &&
+        location.pathname === '/iot/dashboard' &&
+        !hasMenuPath(initialState.menus, location.pathname)
+      ) {
+        const fallback = firstMenuPath(initialState.menus);
+        if (fallback && fallback !== location.pathname) {
+          history.replace(fallback);
+        }
       }
     },
-    bgLayoutImgList: [
-      {
-        src: 'https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/D2LWSqNny4sAAAAAAAAAAAAAFl94AQBr',
-        left: 85,
-        bottom: 100,
-        height: '303px',
-      },
-      {
-        src: 'https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/C2TWRpJpiC0AAAAAAAAAAAAAFl94AQBr',
-        bottom: -68,
-        right: -45,
-        height: '303px',
-      },
-      {
-        src: 'https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/F6vSTbj8KpYAAAAAAAAAAAAAFl94AQBr',
-        bottom: 0,
-        left: 0,
-        width: '331px',
-      },
-    ],
     links: isDev
       ? [
-          <Link key="openapi" to="/umi/plugin/openapi" target="_blank">
+          <a
+            key="openapi"
+            href={__ORANGE_IOT_OPENAPI_DOCS_URL__}
+            target="_blank"
+            rel="noreferrer"
+          >
             <LinkOutlined />
             <span>OpenAPI 文档</span>
-          </Link>,
+          </a>,
         ]
       : [],
     // Replace ProLayout's default ErrorBoundary with our offline-aware version,
@@ -190,7 +285,7 @@ export const layout: RunTimeLayoutConfig = ({
  * @doc https://umijs.org/docs/max/request#配置
  */
 export const request: RequestConfig = {
-  baseURL: isDev ? '' : 'https://pro-api.ant-design-demo.workers.dev',
+  baseURL: '',
   ...errorConfig,
 };
 

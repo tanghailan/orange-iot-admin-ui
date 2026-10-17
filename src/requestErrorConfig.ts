@@ -1,23 +1,14 @@
 ﻿import type { RequestOptions } from '@@/plugin-request/request';
 import type { RequestConfig } from '@umijs/max';
-import { getIntl } from '@umijs/max';
-import { message, notification } from 'antd';
+import { getIntl, history } from '@umijs/max';
+import { message } from 'antd';
 
-// 错误处理方案： 错误类型
-enum ErrorShowType {
-  SILENT = 0,
-  WARN_MESSAGE = 1,
-  ERROR_MESSAGE = 2,
-  NOTIFICATION = 3,
-  REDIRECT = 9,
-}
 // 与后端约定的响应数据格式
 interface ResponseStructure {
-  success: boolean;
+  code: number;
+  message: string;
   data: unknown;
-  errorCode?: number;
-  errorMessage?: string;
-  showType?: ErrorShowType;
+  requestId?: string;
 }
 
 /**
@@ -30,12 +21,13 @@ export const errorConfig: RequestConfig = {
   errorConfig: {
     // 错误抛出
     errorThrower: (res) => {
-      const { success, data, errorCode, errorMessage, showType } =
+      const { code, message, data, requestId } =
         res as unknown as ResponseStructure;
-      if (!success) {
-        const error: any = new Error(errorMessage);
+      // code 0 表示成功，其他都是业务错误
+      if (code !== 0) {
+        const error: any = new Error(message);
         error.name = 'BizError';
-        error.info = { errorCode, errorMessage, showType, data };
+        error.info = { code, message, data, requestId };
         throw error; // 抛出自制的错误
       }
     },
@@ -46,34 +38,36 @@ export const errorConfig: RequestConfig = {
       if (error.name === 'BizError') {
         const errorInfo: ResponseStructure | undefined = error.info;
         if (errorInfo) {
-          const { errorMessage, errorCode } = errorInfo;
-          switch (errorInfo.showType) {
-            case ErrorShowType.SILENT:
-              // do nothing
-              break;
-            case ErrorShowType.WARN_MESSAGE:
-              message.warning(errorMessage);
-              break;
-            case ErrorShowType.ERROR_MESSAGE:
-              message.error(errorMessage);
-              break;
-            case ErrorShowType.NOTIFICATION:
-              notification.open({
-                title: errorCode,
-                description: errorMessage,
-              });
-              break;
-            case ErrorShowType.REDIRECT:
-              window.location.href = '/user/login';
-              break;
-            default:
-              message.error(errorMessage);
-          }
+          message.error(errorInfo.message);
         }
       } else if (error.response) {
         // Axios 的错误
         // 请求成功发出且服务器也响应了状态码，但状态代码超出了 2xx 的范围
-        message.error(`Response status:${error.response.status}`);
+        const status = error.response.status;
+
+        if (status === 401) {
+          if (typeof localStorage !== 'undefined') {
+            localStorage.removeItem('iot_admin_token');
+          }
+          const { pathname, search, hash } = history.location;
+          const responseMessage = error.response.data?.message;
+          if (pathname === '/user/login') {
+            message.error(responseMessage || '登录失败，请检查用户名和密码。');
+          } else {
+            history.replace(
+              `/user/login?redirect=${encodeURIComponent(pathname + search + hash)}`,
+            );
+          }
+          return;
+        }
+
+        // 尝试从响应中提取后端的错误消息
+        const responseData = error.response.data;
+        if (responseData?.message) {
+          message.error(responseData.message);
+        } else {
+          message.error(`Response status:${status}`);
+        }
       } else if (typeof navigator !== 'undefined' && !navigator.onLine) {
         message.error(
           getIntl().formatMessage({
@@ -94,11 +88,17 @@ export const errorConfig: RequestConfig = {
   requestInterceptors: [
     (config: RequestOptions) => {
       // 拦截请求配置，进行个性化处理。
-      // 示例：为请求附加 token（按需启用）
-      // const token = localStorage.getItem('token');
-      // if (token) {
-      //   config.headers = { ...config.headers, Authorization: `Bearer ${token}` };
-      // }
+      // 从localStorage获取token并添加到请求头
+      const token =
+        typeof localStorage === 'undefined'
+          ? null
+          : localStorage.getItem('iot_admin_token');
+      if (token) {
+        config.headers = {
+          ...config.headers,
+          Authorization: `${token}`,
+        };
+      }
       return config;
     },
   ],
