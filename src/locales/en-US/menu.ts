@@ -15,6 +15,7 @@ export default {
   'menu.iot.dashboard': 'Overview',
   'menu.iot.products': 'Products',
   'menu.iot.devices': 'Devices',
+  'menu.iot.agents': 'Agents',
   'menu.iot.messages': 'Commands & Messages',
   'menu.iot.firmware': 'Firmware',
   'menu.iot.scheduledJobs': 'Scheduled Jobs',

@@ -4,6 +4,7 @@ export default {
   'menu.iot.dashboard': '运行概览',
   'menu.iot.products': '产品管理',
   'menu.iot.devices': '设备管理',
+  'menu.iot.agents': '代理管理',
   'menu.iot.messages': '指令与消息',
   'menu.iot.firmware': '固件管理',
   'menu.iot.scheduledJobs': '定时任务',

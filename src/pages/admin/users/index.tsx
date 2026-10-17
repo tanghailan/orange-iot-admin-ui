@@ -83,6 +83,10 @@ const AdminUsersPage = () => {
           value: (user) => user.roles.map((role) => role.roleName).join('、'),
         },
         {
+          title: '所属代理',
+          value: (user) => user.agentName || '平台账号',
+        },
+        {
           title: '状态',
           value: (user) => (user.status === 1 ? '启用' : '停用'),
         },
@@ -171,6 +175,20 @@ const AdminUsersPage = () => {
           )}
         </Space>
       ),
+    },
+    {
+      title: '所属代理',
+      dataIndex: 'agentName',
+      width: 180,
+      render: (_, user) =>
+        user.agentName ? (
+          <Tag color="cyan">
+            {user.agentName}
+            {user.agentCode ? `（${user.agentCode}）` : ''}
+          </Tag>
+        ) : (
+          <Typography.Text type="secondary">平台账号</Typography.Text>
+        ),
     },
     {
       title: '状态',

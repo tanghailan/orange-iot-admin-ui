@@ -34,6 +34,12 @@ export default function access(
     canCreateDevice: has('iot:device:create'),
     canUpdateDevice: has('iot:device:update'),
     canDeleteDevice: has('iot:device:delete'),
+    canTransferDevice: has('iot:device:transfer'),
+    canViewAgents: canOpen('iot:agent:list', '/iot/agents'),
+    canCreateAgent: has('iot:agent:create'),
+    canUpdateAgent: has('iot:agent:update'),
+    canDisableAgent: has('iot:agent:disable'),
+    canGrantAgentProducts: has('iot:agent:product:grant'),
     canListDevices: has('iot:device:list'),
     canViewMessages:
       canOpen('iot:message:list', '/operations/messages') &&

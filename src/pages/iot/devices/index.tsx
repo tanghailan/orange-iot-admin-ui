@@ -6,6 +6,7 @@ import {
   EyeOutlined,
   PlusOutlined,
   StopOutlined,
+  SwapOutlined,
 } from '@ant-design/icons';
 import type { ActionType, ProColumns } from '@ant-design/pro-components';
 import { PageContainer, ProTable } from '@ant-design/pro-components';
@@ -32,9 +33,13 @@ import {
   deleteDevice,
   disableDevice,
   enableDevice,
+  flattenAgentTree,
+  getAgentTree,
+  getAgentTreeNodes,
   getDevice,
   listProducts,
   pageDevices,
+  transferDevice,
   updateDevice,
 } from '@/services/iot';
 import { downloadCsv } from '@/utils/exportCsv';
@@ -49,6 +54,9 @@ type DeviceRow = {
   firmwareVersion?: string;
   lastOnlineAt?: string;
   createdAt?: string;
+  ownerAgentId?: API.AgentId | null;
+  ownerAgentCode?: string;
+  ownerAgentName?: string;
 };
 
 type ProductOption = {
@@ -106,6 +114,13 @@ const DeviceManagement: React.FC = () => {
   const [currentRows, setCurrentRows] = useState<DeviceRow[]>([]);
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
   const [selectedRows, setSelectedRows] = useState<DeviceRow[]>([]);
+  const [transferModalDevice, setTransferModalDevice] =
+    useState<DeviceRow | null>(null);
+  const [transferForm] = Form.useForm<{
+    deviceId: string;
+    targetAgentId: string;
+    reason?: string;
+  }>();
 
   const productsQuery = useQuery({
     queryKey: ['products'],
@@ -121,6 +136,22 @@ const DeviceManagement: React.FC = () => {
   const productNames = new Map(
     products.map((product) => [product.id, product.name]),
   );
+
+  const agentTreeQuery = useQuery({
+    queryKey: ['agent-tree', 'device-transfer'],
+    queryFn: async () => {
+      const response = await getAgentTree({ skipErrorHandler: true });
+      if (response.code !== 0) {
+        throw new Error(response.message || '代理树加载失败');
+      }
+      return flattenAgentTree(getAgentTreeNodes(response.data));
+    },
+    enabled: access.canTransferDevice,
+  });
+  const agentOptions = (agentTreeQuery.data || []).map((agent) => ({
+    value: String(agent.id),
+    label: `${agent.name || agent.agentName || agent.agentCode || agent.id}（${agent.agentCode || agent.id}）`,
+  }));
 
   const deviceDetailQuery = useQuery({
     queryKey: ['device-detail', selectedDevice?.deviceId],
@@ -148,6 +179,7 @@ const DeviceManagement: React.FC = () => {
         { title: '设备 ID', value: (row) => row.deviceId },
         { title: '设备名称', value: (row) => row.name || '未命名设备' },
         { title: '产品 Key', value: (row) => row.productKey },
+        { title: '所属代理', value: (row) => row.ownerAgentName || '未分配' },
         { title: '状态', value: (row) => (row.status === 1 ? '启用' : '禁用') },
         { title: '在线状态', value: (row) => (row.online ? '在线' : '离线') },
         { title: '固件版本', value: (row) => row.firmwareVersion },
@@ -183,6 +215,29 @@ const DeviceManagement: React.FC = () => {
       reloadDevices();
     },
     onError: (error) => message.error(error.message || '禁用设备失败'),
+  });
+
+  const transferMutation = useMutation<
+    void,
+    Error,
+    { deviceId: string; targetAgentId: string; reason?: string }
+  >({
+    mutationFn: async ({ deviceId, targetAgentId, reason }) => {
+      const response = await transferDevice(deviceId, {
+        targetAgentId,
+        reason: reason?.trim() || undefined,
+      });
+      if (response.code !== 0) {
+        throw new Error(response.message || '设备转移失败');
+      }
+    },
+    onSuccess: () => {
+      message.success('设备归属已转移');
+      setTransferModalDevice(null);
+      transferForm.resetFields();
+      reloadDevices();
+    },
+    onError: (error) => message.error(error.message || '设备转移失败'),
   });
 
   const saveMutation = useMutation<
@@ -279,6 +334,13 @@ const DeviceManagement: React.FC = () => {
         productNames.get(record.productId) || record.productKey || '-',
     },
     {
+      title: '所属代理',
+      dataIndex: 'ownerAgentName',
+      width: 180,
+      search: false,
+      render: (_, record) => record.ownerAgentName || '—',
+    },
+    {
       title: '状态',
       dataIndex: 'status',
       width: 100,
@@ -333,7 +395,7 @@ const DeviceManagement: React.FC = () => {
     {
       title: '操作',
       valueType: 'option',
-      width: 280,
+      width: 360,
       fixed: 'right',
       render: (_, record) => {
         const rowDeleteLoading =
@@ -426,6 +488,21 @@ const DeviceManagement: React.FC = () => {
                 删除
               </Button>
             </Popconfirm>
+          ) : null,
+          access.canTransferDevice ? (
+            <Button
+              key="transfer"
+              type="link"
+              size="small"
+              icon={<SwapOutlined />}
+              onClick={() => {
+                transferForm.resetFields();
+                transferForm.setFieldsValue({ deviceId: record.deviceId });
+                setTransferModalDevice(record);
+              }}
+            >
+              转移代理
+            </Button>
           ) : null,
         ];
       },
@@ -607,6 +684,11 @@ const DeviceManagement: React.FC = () => {
                 deviceDetailQuery.data.productKey ||
                 '-'}
             </Descriptions.Item>
+            <Descriptions.Item label="所属代理">
+              {deviceDetailQuery.data.ownerAgentName ||
+                deviceDetailQuery.data.ownerAgentCode ||
+                '未分配'}
+            </Descriptions.Item>
             <Descriptions.Item label="运行状态">
               <Tag color={getStatus(deviceDetailQuery.data).color}>
                 {getStatus(deviceDetailQuery.data).text}
@@ -624,6 +706,54 @@ const DeviceManagement: React.FC = () => {
           </Descriptions>
         ) : null}
       </Drawer>
+
+      <Modal
+        title={`设备转移：${transferModalDevice?.deviceId || ''}`}
+        open={transferModalDevice !== null}
+        onOk={() => transferForm.submit()}
+        onCancel={() => {
+          if (!transferMutation.isPending) {
+            setTransferModalDevice(null);
+            transferForm.resetFields();
+          }
+        }}
+        confirmLoading={transferMutation.isPending}
+        destroyOnHidden
+      >
+        <Form
+          form={transferForm}
+          layout="vertical"
+          onFinish={(values) => transferMutation.mutate(values)}
+        >
+          <Form.Item name="deviceId" label="设备 ID">
+            <Input disabled />
+          </Form.Item>
+          <Form.Item
+            name="targetAgentId"
+            label="目标代理"
+            rules={[{ required: true, message: '请选择目标代理' }]}
+          >
+            <Select
+              showSearch
+              optionFilterProp="label"
+              loading={agentTreeQuery.isFetching}
+              options={agentOptions}
+              placeholder="选择设备的新归属代理"
+            />
+          </Form.Item>
+          <Form.Item name="reason" label="转移原因">
+            <Input.TextArea
+              rows={3}
+              maxLength={512}
+              placeholder="可选，写入审计记录"
+            />
+          </Form.Item>
+        </Form>
+        <Typography.Text type="secondary">
+          设备转移不修改凭证、Topic 或 MQTT Client
+          ID，旧代理将失去当前数据访问权。
+        </Typography.Text>
+      </Modal>
 
       <Modal
         title={editingDevice ? '编辑设备' : '注册设备'}

@@ -1,6 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import access from './access';
 
+const agentMenu = [
+  {
+    id: 1,
+    menuCode: 'iot:agents',
+    menuType: 'PAGE' as const,
+    menuName: '代理管理',
+    name: '代理管理',
+    path: '/iot/agents',
+    sortOrder: 10,
+    status: 1,
+    children: [],
+  },
+];
+
 describe('access', () => {
   it('should return canAdmin true when user has admin access', () => {
     const initialState = {
@@ -60,5 +74,30 @@ describe('access', () => {
     const result = access(undefined);
 
     expect(result.canAdmin).toBeFalsy();
+  });
+});
+
+describe('agent access', () => {
+  it('requires both the agent permission code and dynamic menu path', () => {
+    expect(
+      access({
+        accessCodes: ['iot:agent:list'],
+        menus: agentMenu,
+      }).canViewAgents,
+    ).toBe(true);
+
+    expect(
+      access({
+        accessCodes: ['iot:agent:list'],
+        menus: [],
+      }).canViewAgents,
+    ).toBe(false);
+
+    expect(
+      access({
+        accessCodes: [],
+        menus: agentMenu,
+      }).canViewAgents,
+    ).toBe(false);
   });
 });

@@ -89,6 +89,9 @@ declare namespace API {
     status: number;
     createdAt: string;
     roles: AdminUserRoleResponse[];
+    agentId?: AgentId | null;
+    agentCode?: string;
+    agentName?: string;
   };
 
   // ==================== 产品相关 ====================
@@ -156,6 +159,9 @@ declare namespace API {
     firmwareVersion?: string;
     lastOnlineAt?: string;
     createdAt: string;
+    ownerAgentId?: AgentId | null;
+    ownerAgentCode?: string;
+    ownerAgentName?: string;
   };
 
   type DevicePageRequest = {
@@ -224,5 +230,93 @@ declare namespace API {
     alertLevel: string;
     alertMessage: string;
     checkedAt: string | null;
+  };
+
+  // ==================== 代理与数据范围相关 ====================
+  type AgentId = number | string;
+
+  type AgentAccountSummary = {
+    id?: AgentId;
+    username?: string;
+    realName?: string;
+    status?: number;
+  };
+
+  type AgentDeviceSummary = {
+    deviceId: string;
+    name?: string;
+    productName?: string;
+    status?: number;
+  };
+
+  type AgentTreeNode = {
+    id: AgentId;
+    agentCode?: string;
+    agentName?: string;
+    name?: string;
+    parentId?: AgentId | null;
+    level?: number;
+    depth?: number;
+    status?: number;
+    description?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    accountCount?: number;
+    userCount?: number;
+    deviceCount?: number;
+    accounts?: AgentAccountSummary[];
+    users?: AgentAccountSummary[];
+    devices?: AgentDeviceSummary[];
+    children?: AgentTreeNode[];
+  };
+
+  type AgentTreeResponse =
+    | AgentTreeNode[]
+    | {
+        tree?: AgentTreeNode[];
+        nodes?: AgentTreeNode[];
+        list?: AgentTreeNode[];
+      };
+
+  type AgentCreateRequest = {
+    agentCode: string;
+    name: string;
+    parentId?: AgentId | null;
+    description?: string;
+  };
+
+  type AgentUpdateRequest = {
+    name: string;
+    description?: string;
+  };
+
+  type AgentMoveRequest = {
+    parentId?: AgentId | null;
+  };
+
+  type AgentProductResponse = {
+    id: number;
+    name: string;
+    productKey?: string;
+    status?: number;
+    authorized?: boolean;
+    granted?: boolean;
+  };
+
+  type AgentProductsResponse =
+    | AgentProductResponse[]
+    | {
+        products?: AgentProductResponse[];
+        productIds?: number[];
+        list?: AgentProductResponse[];
+      };
+
+  type AgentProductsUpdateRequest = {
+    productIds: number[];
+  };
+
+  type DeviceTransferRequest = {
+    targetAgentId: AgentId;
+    reason?: string;
   };
 }

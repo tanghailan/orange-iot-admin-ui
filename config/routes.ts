@@ -59,6 +59,12 @@ export default [
         name: 'devices',
         access: 'canViewDevices',
       },
+      {
+        path: '/iot/agents',
+        component: './iot/agents',
+        name: 'agents',
+        access: 'canViewAgents',
+      },
     ],
   },
   {
