@@ -203,7 +203,7 @@ const AgentAuditPage = () => {
       </Card>
       <Drawer
         title="审计详情"
-        width={620}
+        size={620}
         open={selected !== undefined}
         onClose={() => setSelected(undefined)}
       >
