@@ -250,7 +250,7 @@ const ScheduledJobsPage: React.FC = () => {
       width: 220,
       ellipsis: true,
       render: (value: string, record) => (
-        <Space direction="vertical" size={2}>
+        <Space orientation="vertical" size={2}>
           <Typography.Text strong>{value}</Typography.Text>
           {record.description && (
             <Typography.Text type="secondary">
@@ -445,7 +445,7 @@ const ScheduledJobsPage: React.FC = () => {
         </Button>,
       ]}
     >
-      <Space direction="vertical" size={16} style={{ display: 'flex' }}>
+      <Space orientation="vertical" size={16} style={{ display: 'flex' }}>
         {jobsQuery.isError && (
           <Alert
             type="error"

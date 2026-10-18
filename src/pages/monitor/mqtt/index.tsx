@@ -225,7 +225,7 @@ const MqttMonitor: FC = () => {
         </Button>,
       ]}
     >
-      <Space direction="vertical" size={16} style={{ display: 'flex' }}>
+      <Space orientation="vertical" size={16} style={{ display: 'flex' }}>
         {backlogQuery.isError && (
           <Alert
             type={backlog ? 'warning' : 'error'}

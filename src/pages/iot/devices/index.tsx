@@ -840,7 +840,7 @@ const DeviceManagement: React.FC = () => {
         destroyOnHidden
       >
         {credential && (
-          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
             <Typography.Text type="warning">
               请立即复制并妥善保存。设备密钥和 MQTT
               密码仅在注册时返回，关闭后无法再次查看。

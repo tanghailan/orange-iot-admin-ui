@@ -412,7 +412,7 @@ const MessagesPage: React.FC = () => {
         </Button>,
       ]}
     >
-      <Space direction="vertical" size={16} style={{ display: 'flex' }}>
+      <Space orientation="vertical" size={16} style={{ display: 'flex' }}>
         <Card size="small">
           <Space.Compact style={{ width: '100%', maxWidth: 640 }}>
             <Input
