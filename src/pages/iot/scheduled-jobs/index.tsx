@@ -450,7 +450,7 @@ const ScheduledJobsPage: React.FC = () => {
           <Alert
             type="error"
             showIcon
-            message="定时任务加载失败"
+            title="定时任务加载失败"
             description={errorText(jobsQuery.error, '请稍后重试')}
             action={
               <Button size="small" onClick={() => void jobsQuery.refetch()}>
@@ -634,7 +634,7 @@ const ScheduledJobsPage: React.FC = () => {
           <Alert
             type="error"
             showIcon
-            message="执行日志加载失败"
+            title="执行日志加载失败"
             description={errorText(logsQuery.error, '请稍后重试')}
             action={
               <Button size="small" onClick={() => void logsQuery.refetch()}>

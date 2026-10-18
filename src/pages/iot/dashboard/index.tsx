@@ -49,7 +49,7 @@ const IoTDashboard: FC = () => {
           type="error"
           showIcon
           style={{ marginBottom: 16 }}
-          message="管理统计暂不可用"
+          title="管理统计暂不可用"
           description="无法读取产品和设备总数，请检查 Admin 服务及数据库连接。"
           action={
             <Button size="small" onClick={() => void managementQuery.refetch()}>
@@ -73,7 +73,9 @@ const IoTDashboard: FC = () => {
                   style={{ color: '#3978c5', marginRight: 4 }}
                 />
               }
-              valueStyle={{ color: '#172b4d', fontSize: 28, fontWeight: 600 }}
+              styles={{
+                content: { color: '#172b4d', fontSize: 28, fontWeight: 600 },
+              }}
             />
             <Typography.Text
               type="secondary"
@@ -94,7 +96,9 @@ const IoTDashboard: FC = () => {
               prefix={
                 <ApiOutlined style={{ color: '#3978c5', marginRight: 4 }} />
               }
-              valueStyle={{ color: '#172b4d', fontSize: 28, fontWeight: 600 }}
+              styles={{
+                content: { color: '#172b4d', fontSize: 28, fontWeight: 600 },
+              }}
             />
             <Typography.Text
               type="secondary"

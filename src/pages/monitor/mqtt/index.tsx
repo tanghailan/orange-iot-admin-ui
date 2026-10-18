@@ -97,13 +97,15 @@ const MqttMonitor: FC = () => {
     <Card
       loading={backlogQuery.isLoading}
       style={{ height: '100%', borderRadius: 10 }}
-      bodyStyle={{ padding: '20px 22px' }}
+      styles={{ body: { padding: '20px 22px' } }}
     >
       <Statistic
         title={title}
         value={value}
         prefix={<span style={{ color, marginRight: 4 }}>{icon}</span>}
-        valueStyle={{ color: '#172b4d', fontSize: 28, fontWeight: 600 }}
+        styles={{
+          content: { color: '#172b4d', fontSize: 28, fontWeight: 600 },
+        }}
       />
       {note && (
         <Typography.Text
@@ -123,7 +125,7 @@ const MqttMonitor: FC = () => {
           type={alertState.type}
           showIcon
           icon={alertState.icon}
-          message={
+          title={
             <Space wrap>
               <span>Stream 处理状态</span>
               <Tag color={alertState.tagColor}>{alertState.label}</Tag>
@@ -167,7 +169,7 @@ const MqttMonitor: FC = () => {
       <Card
         title="Stream 快照信息"
         style={{ borderRadius: 10 }}
-        bodyStyle={{ padding: '8px 22px 18px' }}
+        styles={{ body: { padding: '8px 22px 18px' } }}
       >
         <Row gutter={[24, 16]}>
           <Col xs={24} md={12}>
@@ -230,7 +232,7 @@ const MqttMonitor: FC = () => {
           <Alert
             type={backlog ? 'warning' : 'error'}
             showIcon
-            message={
+            title={
               backlog
                 ? '刷新失败，当前展示的是上次成功获取的数据'
                 : 'MQTT 监控数据加载失败'

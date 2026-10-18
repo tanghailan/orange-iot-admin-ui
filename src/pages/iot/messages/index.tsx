@@ -461,7 +461,7 @@ const MessagesPage: React.FC = () => {
                   <Alert
                     type="info"
                     showIcon
-                    message="先输入设备 ID 并查询历史，再下发指令。"
+                    title="先输入设备 ID 并查询历史，再下发指令。"
                     style={{ marginBottom: 16 }}
                   />
                 )}
@@ -584,7 +584,7 @@ const MessagesPage: React.FC = () => {
                         <Alert
                           type="info"
                           showIcon
-                          message="选择固件会填入版本、下载地址和文件大小。固件库保存的是 SHA-256，协议字段是可选 MD5，因此不会自动填入 md5。"
+                          title="选择固件会填入版本、下载地址和文件大小。固件库保存的是 SHA-256，协议字段是可选 MD5，因此不会自动填入 md5。"
                           style={{ marginBottom: 16 }}
                         />
                       </>
@@ -638,11 +638,7 @@ const MessagesPage: React.FC = () => {
                 </Form>
               </>
             ) : (
-              <Alert
-                type="info"
-                showIcon
-                message="当前账号没有下发指令权限。"
-              />
+              <Alert type="info" showIcon title="当前账号没有下发指令权限。" />
             )}
           </Card>
         )}
@@ -678,7 +674,7 @@ const MessagesPage: React.FC = () => {
               <Alert
                 type="error"
                 showIcon
-                message={errorText(commandsQuery.error, '指令历史加载失败')}
+                title={errorText(commandsQuery.error, '指令历史加载失败')}
                 action={
                   <Button size="small" onClick={() => commandsQuery.refetch()}>
                     重试
@@ -770,7 +766,7 @@ const MessagesPage: React.FC = () => {
               <Alert
                 type="error"
                 showIcon
-                message={errorText(messagesQuery.error, '消息历史加载失败')}
+                title={errorText(messagesQuery.error, '消息历史加载失败')}
                 action={
                   <Button size="small" onClick={() => messagesQuery.refetch()}>
                     重试

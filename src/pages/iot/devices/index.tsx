@@ -654,7 +654,7 @@ const DeviceManagement: React.FC = () => {
         title="设备详情"
         open={!!selectedDevice}
         onClose={() => setSelectedDevice(null)}
-        width="min(560px, calc(100vw - 24px))"
+        size="min(560px, calc(100vw - 24px))"
         destroyOnHidden
       >
         {deviceDetailQuery.isPending ? (
@@ -763,7 +763,7 @@ const DeviceManagement: React.FC = () => {
         confirmLoading={saveMutation.isPending}
         cancelButtonProps={{ disabled: saveMutation.isPending }}
         closable={!saveMutation.isPending}
-        maskClosable={!saveMutation.isPending}
+        mask={{ closable: !saveMutation.isPending }}
         width="min(600px, calc(100vw - 32px))"
         destroyOnHidden
       >

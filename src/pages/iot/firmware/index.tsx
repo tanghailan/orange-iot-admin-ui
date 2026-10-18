@@ -445,7 +445,7 @@ const FirmwareManagement: React.FC = () => {
           type="error"
           showIcon
           style={{ marginBottom: 16 }}
-          message="产品列表加载失败"
+          title="产品列表加载失败"
           description={getErrorMessage(
             productsQuery.error,
             '请检查连接后重试。',
@@ -541,7 +541,7 @@ const FirmwareManagement: React.FC = () => {
         title="固件详情"
         open={!!selectedFirmware}
         onClose={() => setSelectedFirmware(null)}
-        width="min(560px, calc(100vw - 24px))"
+        size="min(560px, calc(100vw - 24px))"
         destroyOnHidden
       >
         {firmwareDetailQuery.isPending ? (
@@ -636,7 +636,7 @@ const FirmwareManagement: React.FC = () => {
         styles={{
           body: { maxHeight: 'calc(100vh - 220px)', overflowY: 'auto' },
         }}
-        maskClosable={!isUploading}
+        mask={{ closable: !isUploading }}
         closable={!isUploading}
         onCancel={handleCancel}
         onOk={() => form.submit()}
@@ -666,7 +666,7 @@ const FirmwareManagement: React.FC = () => {
                 type="info"
                 showIcon
                 style={{ marginBottom: 20 }}
-                message={`${editingFirmware.productName || `产品 #${editingFirmware.productId}`} · ${editingFirmware.version}`}
+                title={`${editingFirmware.productName || `产品 #${editingFirmware.productId}`} · ${editingFirmware.version}`}
                 description="产品、版本号和已上传文件不可修改。"
               />
               <Form.Item
@@ -743,7 +743,7 @@ const FirmwareManagement: React.FC = () => {
                     type="success"
                     showIcon
                     style={{ marginTop: 12 }}
-                    message={uploadedFile.name}
+                    title={uploadedFile.name}
                     description={`${formatFileSize(uploadedFile.sizeBytes)} · SHA-256 ${uploadedFile.checksum}`}
                   />
                 )}

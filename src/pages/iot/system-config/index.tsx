@@ -501,7 +501,7 @@ const SystemConfigManagement: React.FC = () => {
         confirmLoading={saveMutation.isPending}
         cancelButtonProps={{ disabled: saveMutation.isPending }}
         closable={!saveMutation.isPending}
-        maskClosable={!saveMutation.isPending}
+        mask={{ closable: !saveMutation.isPending }}
         width="min(640px, calc(100vw - 32px))"
         destroyOnHidden
       >
