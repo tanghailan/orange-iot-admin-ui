@@ -26,7 +26,7 @@ npm ci
 npm run dev
 ```
 
-The development proxy sends `/admin/*` to the Admin service and rewrites the path to `/api/v1/admin/*`. The default target is `http://localhost:8811`. Set `IOT_ADMIN_API_URL` to use another Admin service:
+The development proxy sends `/api/v1/admin/*` to the Admin service. Admin UI pages use `/admin/*`, keeping browser routes separate from API routes. The default API target is `http://localhost:8811`. Set `IOT_ADMIN_API_URL` to use another Admin service:
 
 ```bash
 IOT_ADMIN_API_URL=http://localhost:8811 npm run dev
@@ -42,7 +42,7 @@ Build the static application:
 npm run build
 ```
 
-The Umi proxy only runs in development. Configure the production web server or ingress to forward same-origin requests under `/admin/` to the Admin service under `/api/v1/admin/`. The browser stores the Sa-Token access token and sends it in the `Authorization` header.
+The Umi proxy only runs in development. Configure the production web server or ingress to forward same-origin requests under `/api/v1/admin/` to the Admin service under the same path. The browser stores the Sa-Token access token and sends it in the `Authorization` header.
 
 ## Project Structure
 

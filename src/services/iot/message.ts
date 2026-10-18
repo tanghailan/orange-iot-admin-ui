@@ -53,7 +53,7 @@ export async function sendDeviceCommand(
   options?: RequestOptions,
 ) {
   const response = await request<ApiResponse<CommandRecord>>(
-    `/admin/devices/${encodeURIComponent(deviceId)}/commands`,
+    `/api/v1/admin/devices/${encodeURIComponent(deviceId)}/commands`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -71,7 +71,7 @@ export async function pageDeviceCommands(
   options?: RequestOptions,
 ) {
   const response = await request<ApiResponse<MessagePage<CommandRecord>>>(
-    `/admin/devices/${encodeURIComponent(deviceId)}/commands`,
+    `/api/v1/admin/devices/${encodeURIComponent(deviceId)}/commands`,
     {
       method: 'GET',
       params,
@@ -88,7 +88,7 @@ export async function pageDeviceMessages(
   options?: RequestOptions,
 ) {
   const response = await request<ApiResponse<MessagePage<DeviceMessageRecord>>>(
-    `/admin/devices/${encodeURIComponent(deviceId)}/messages`,
+    `/api/v1/admin/devices/${encodeURIComponent(deviceId)}/messages`,
     {
       method: 'GET',
       params,

@@ -31,7 +31,7 @@ export async function pageAgentAuditLogs(params: {
   targetType?: string;
 }) {
   const response = await request<ApiResponse<AgentAuditLogPage>>(
-    '/admin/agent-audits',
+    '/api/v1/admin/agent-audits',
     {
       method: 'GET',
       params,

@@ -284,15 +284,15 @@ const SystemConfigManagement: React.FC = () => {
     loadConfigDetail(record.id);
 
   const columns: ProColumns<SystemConfigRecord>[] = [
-    { title: 'ID', dataIndex: 'id', width: 80, search: false },
+    { title: 'ID', dataIndex: 'id', width: 70, search: false },
     {
       title: '配置键',
       dataIndex: 'configKey',
-      width: 250,
+      width: 220,
       search: false,
       ellipsis: true,
       render: (_, record) => (
-        <Typography.Text code copyable>
+        <Typography.Text code copyable ellipsis={{ tooltip: record.configKey }}>
           {record.configKey}
         </Typography.Text>
       ),
@@ -300,20 +300,26 @@ const SystemConfigManagement: React.FC = () => {
     {
       title: '配置名称',
       dataIndex: 'name',
-      width: 180,
+      width: 170,
       search: false,
       ellipsis: true,
+      render: (_, record) => (
+        <Typography.Text ellipsis={{ tooltip: record.name }}>
+          {record.name}
+        </Typography.Text>
+      ),
     },
     {
       title: '配置值',
       dataIndex: 'configValue',
+      width: 240,
       search: false,
       ellipsis: true,
       render: (_, record) => {
         const value = record.configValue || '';
         const preview = value.replace(/\s+/g, ' ');
         return value ? (
-          <Typography.Text code title={value}>
+          <Typography.Text code ellipsis={{ tooltip: value }}>
             {preview.length > 80 ? `${preview.slice(0, 80)}…` : preview}
           </Typography.Text>
         ) : (
@@ -324,7 +330,7 @@ const SystemConfigManagement: React.FC = () => {
     {
       title: '值类型',
       dataIndex: 'valueType',
-      width: 120,
+      width: 100,
       valueType: 'select',
       valueEnum: Object.fromEntries(
         Object.entries(VALUE_TYPE_LABELS).map(([value, text]) => [
@@ -341,7 +347,7 @@ const SystemConfigManagement: React.FC = () => {
     {
       title: '状态',
       dataIndex: 'status',
-      width: 100,
+      width: 90,
       valueType: 'select',
       valueEnum: {
         1: { text: '启用' },
@@ -362,14 +368,22 @@ const SystemConfigManagement: React.FC = () => {
     {
       title: '说明',
       dataIndex: 'description',
+      width: 180,
       search: false,
       ellipsis: true,
-      render: (_, record) => record.description || '-',
+      render: (_, record) =>
+        record.description ? (
+          <Typography.Text ellipsis={{ tooltip: record.description }}>
+            {record.description}
+          </Typography.Text>
+        ) : (
+          '-'
+        ),
     },
     {
       title: '更新时间',
       dataIndex: 'updatedAt',
-      width: 180,
+      width: 160,
       search: false,
       valueType: 'dateTime',
       render: (_, record) => record.updatedAt || record.createdAt || '-',
@@ -377,7 +391,7 @@ const SystemConfigManagement: React.FC = () => {
     {
       title: '操作',
       valueType: 'option',
-      width: 220,
+      width: 200,
       className: 'iot-action-cell',
       fixed: 'right',
       render: (_, record) => {
@@ -441,7 +455,8 @@ const SystemConfigManagement: React.FC = () => {
         request={loadConfigs}
         search={{ labelWidth: 'auto', span: 8 }}
         options={{ reload: true, density: true, setting: true }}
-        scroll={{ x: 1250 }}
+        tableLayout="fixed"
+        scroll={{ x: 1480 }}
         toolBarRender={() => [
           <Button
             key="export-page"

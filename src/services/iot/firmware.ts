@@ -65,7 +65,7 @@ type FirmwarePageResponse = {
 
 type RequestOptions = { [key: string]: any };
 
-/** 上传固件文件到存储，POST /api/v1/admin/firmwares/upload（代理前缀为 /admin）。 */
+/** 上传固件文件到存储，POST /api/v1/admin/firmwares/upload。 */
 export async function uploadFirmware(
   file: File,
   options?: RequestOptions,
@@ -73,7 +73,7 @@ export async function uploadFirmware(
   const formData = new FormData();
   formData.append('file', file);
 
-  return request<ApiResponse<FirmwareUploadResult>>('/admin/firmwares/upload', {
+  return request<ApiResponse<FirmwareUploadResult>>('/api/v1/admin/firmwares/upload', {
     method: 'POST',
     data: formData,
     ...(options || {}),
@@ -85,7 +85,7 @@ export async function createFirmware(
   body: FirmwareCreatePayload,
   options?: RequestOptions,
 ) {
-  return request<ApiResponse<FirmwareRecord>>('/admin/firmwares', {
+  return request<ApiResponse<FirmwareRecord>>('/api/v1/admin/firmwares', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -101,7 +101,7 @@ export async function updateFirmware(
   body: FirmwareUpdatePayload,
   options?: RequestOptions,
 ) {
-  return request<ApiResponse<FirmwareRecord>>(`/admin/firmwares/${id}`, {
+  return request<ApiResponse<FirmwareRecord>>(`/api/v1/admin/firmwares/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -113,7 +113,7 @@ export async function updateFirmware(
 
 /** 删除固件 DELETE /api/v1/admin/firmwares/{id}。 */
 export async function deleteFirmware(id: number, options?: RequestOptions) {
-  return request<ApiResponse<void>>(`/admin/firmwares/${id}`, {
+  return request<ApiResponse<void>>(`/api/v1/admin/firmwares/${id}`, {
     method: 'DELETE',
     ...(options || {}),
   });
@@ -124,7 +124,7 @@ export async function pageFirmwares(
   params: FirmwarePageParams,
   options?: RequestOptions,
 ) {
-  return request<ApiResponse<FirmwarePageResponse>>('/admin/firmwares', {
+  return request<ApiResponse<FirmwarePageResponse>>('/api/v1/admin/firmwares', {
     method: 'GET',
     params,
     ...(options || {}),
@@ -133,7 +133,7 @@ export async function pageFirmwares(
 
 /** 固件详情 GET /api/v1/admin/firmwares/{id}。 */
 export async function getFirmware(id: number, options?: RequestOptions) {
-  return request<ApiResponse<FirmwareRecord>>(`/admin/firmwares/${id}`, {
+  return request<ApiResponse<FirmwareRecord>>(`/api/v1/admin/firmwares/${id}`, {
     method: 'GET',
     ...(options || {}),
   });
@@ -145,7 +145,7 @@ export async function getFirmwareDownloadUrl(
   options?: RequestOptions,
 ) {
   return request<ApiResponse<string>>(
-    `/admin/firmwares/${id}/download-url`,
+    `/api/v1/admin/firmwares/${id}/download-url`,
     {
       method: 'GET',
       ...(options || {}),

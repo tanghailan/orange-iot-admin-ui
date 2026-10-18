@@ -9,7 +9,7 @@ const unwrap = <T>(response: API.ApiResponse<T>) => {
 
 export async function getAdminUsers(params: API.PageRequest) {
   const response = await request<API.ApiResponse<API.PageResponse<API.AdminUserResponse>>>(
-    '/admin/users',
+    '/api/v1/admin/users',
     { method: 'GET', params },
   );
   return unwrap(response);
@@ -17,7 +17,7 @@ export async function getAdminUsers(params: API.PageRequest) {
 
 export async function getAssignableRoles() {
   const response = await request<API.ApiResponse<API.AdminUserRoleResponse[]>>(
-    '/admin/user-roles',
+    '/api/v1/admin/user-roles',
     { method: 'GET' },
   );
   return unwrap(response);
@@ -26,7 +26,7 @@ export async function getAssignableRoles() {
 export async function getAssignableAgents() {
   const response = await request<
     API.ApiResponse<API.AdminAssignableAgentResponse[]>
-  >('/admin/user-agents', { method: 'GET' });
+  >('/api/v1/admin/user-agents', { method: 'GET' });
   return unwrap(response);
 }
 
@@ -36,7 +36,7 @@ export async function createAdminUser(data: {
   roleIds: number[];
   agentId: API.AgentId;
 }) {
-  const response = await request<API.ApiResponse<void>>('/admin/users', {
+  const response = await request<API.ApiResponse<void>>('/api/v1/admin/users', {
     method: 'POST',
     data,
   });
@@ -45,7 +45,7 @@ export async function createAdminUser(data: {
 
 export async function updateAdminUserAgent(id: number, agentId: API.AgentId) {
   const response = await request<API.ApiResponse<void>>(
-    `/admin/users/${id}/agent`,
+    `/api/v1/admin/users/${id}/agent`,
     {
       method: 'PUT',
       data: { agentId },
@@ -55,7 +55,7 @@ export async function updateAdminUserAgent(id: number, agentId: API.AgentId) {
 }
 
 export async function updateAdminUserStatus(id: number, status: number) {
-  const response = await request<API.ApiResponse<void>>(`/admin/users/${id}/status`, {
+  const response = await request<API.ApiResponse<void>>(`/api/v1/admin/users/${id}/status`, {
     method: 'PUT',
     data: { status },
   });
@@ -63,7 +63,7 @@ export async function updateAdminUserStatus(id: number, status: number) {
 }
 
 export async function updateAdminUserRoles(id: number, roleIds: number[]) {
-  const response = await request<API.ApiResponse<void>>(`/admin/users/${id}/roles`, {
+  const response = await request<API.ApiResponse<void>>(`/api/v1/admin/users/${id}/roles`, {
     method: 'PUT',
     data: { roleIds },
   });
@@ -71,7 +71,7 @@ export async function updateAdminUserRoles(id: number, roleIds: number[]) {
 }
 
 export async function resetAdminPassword(id: number, password: string) {
-  const response = await request<API.ApiResponse<void>>(`/admin/users/${id}/password`, {
+  const response = await request<API.ApiResponse<void>>(`/api/v1/admin/users/${id}/password`, {
     method: 'PUT',
     data: { password },
   });
@@ -80,7 +80,7 @@ export async function resetAdminPassword(id: number, password: string) {
 
 export async function getAdminRoles() {
   const response = await request<API.ApiResponse<API.AdminRoleResponse[]>>(
-    '/admin/roles',
+    '/api/v1/admin/roles',
     { method: 'GET' },
   );
   return unwrap(response);
@@ -94,14 +94,14 @@ export async function saveAdminRole(data: {
   permissionIds: number[];
 }, id?: number) {
   const response = await request<API.ApiResponse<void>>(
-    id ? `/admin/roles/${id}` : '/admin/roles',
+    id ? `/api/v1/admin/roles/${id}` : '/api/v1/admin/roles',
     { method: id ? 'PUT' : 'POST', data },
   );
   return unwrap(response);
 }
 
 export async function deleteAdminRole(id: number) {
-  const response = await request<API.ApiResponse<void>>(`/admin/roles/${id}`, {
+  const response = await request<API.ApiResponse<void>>(`/api/v1/admin/roles/${id}`, {
     method: 'DELETE',
   });
   return unwrap(response);
@@ -109,7 +109,7 @@ export async function deleteAdminRole(id: number) {
 
 export async function getAdminMenus() {
   const response = await request<API.ApiResponse<API.AdminMenuResponse[]>>(
-    '/admin/menus',
+    '/api/v1/admin/menus',
     { method: 'GET' },
   );
   return unwrap(response);
@@ -127,14 +127,14 @@ export async function saveAdminMenu(data: {
   status: number;
 }, id?: number) {
   const response = await request<API.ApiResponse<void>>(
-    id ? `/admin/menus/${id}` : '/admin/menus',
+    id ? `/api/v1/admin/menus/${id}` : '/api/v1/admin/menus',
     { method: id ? 'PUT' : 'POST', data },
   );
   return unwrap(response);
 }
 
 export async function deleteAdminMenu(id: number) {
-  const response = await request<API.ApiResponse<void>>(`/admin/menus/${id}`, {
+  const response = await request<API.ApiResponse<void>>(`/api/v1/admin/menus/${id}`, {
     method: 'DELETE',
   });
   return unwrap(response);
@@ -142,7 +142,7 @@ export async function deleteAdminMenu(id: number) {
 
 export async function getAdminPermissions() {
   const response = await request<API.ApiResponse<API.AdminPermissionResponse[]>>(
-    '/admin/permissions',
+    '/api/v1/admin/permissions',
     { method: 'GET' },
   );
   return unwrap(response);
@@ -157,14 +157,14 @@ export async function saveAdminPermission(data: {
   status: number;
 }, id?: number) {
   const response = await request<API.ApiResponse<void>>(
-    id ? `/admin/permissions/${id}` : '/admin/permissions',
+    id ? `/api/v1/admin/permissions/${id}` : '/api/v1/admin/permissions',
     { method: id ? 'PUT' : 'POST', data },
   );
   return unwrap(response);
 }
 
 export async function deleteAdminPermission(id: number) {
-  const response = await request<API.ApiResponse<void>>(`/admin/permissions/${id}`, {
+  const response = await request<API.ApiResponse<void>>(`/api/v1/admin/permissions/${id}`, {
     method: 'DELETE',
   });
   return unwrap(response);

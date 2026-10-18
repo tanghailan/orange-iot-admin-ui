@@ -52,7 +52,7 @@ function unwrap<T>(response: ApiResponse<T>, fallbackMessage: string): T {
 /** 查询定时任务列表。 */
 export async function listScheduledJobs(options?: RequestOptions) {
   const response = await request<ApiResponse<ScheduledJobRecord[]>>(
-    '/admin/scheduled-jobs',
+    '/api/v1/admin/scheduled-jobs',
     {
       method: 'GET',
       skipErrorHandler: true,
@@ -69,7 +69,7 @@ export async function updateScheduledJob(
   options?: RequestOptions,
 ) {
   const response = await request<ApiResponse<ScheduledJobRecord>>(
-    `/admin/scheduled-jobs/${encodeURIComponent(jobName)}`,
+    `/api/v1/admin/scheduled-jobs/${encodeURIComponent(jobName)}`,
     {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -87,7 +87,7 @@ export async function triggerScheduledJob(
   options?: RequestOptions,
 ) {
   const response = await request<ApiResponse<void>>(
-    `/admin/scheduled-jobs/${encodeURIComponent(jobName)}/trigger`,
+    `/api/v1/admin/scheduled-jobs/${encodeURIComponent(jobName)}/trigger`,
     {
       method: 'POST',
       skipErrorHandler: true,
@@ -103,7 +103,7 @@ export async function pageScheduledJobLogs(
   options?: RequestOptions,
 ) {
   const response = await request<ApiResponse<ScheduledJobLogPage>>(
-    '/admin/scheduled-jobs/logs',
+    '/api/v1/admin/scheduled-jobs/logs',
     {
       method: 'GET',
       params,
@@ -119,7 +119,7 @@ export async function exportScheduledJobLogs(
   ids: number[],
   options?: RequestOptions,
 ) {
-  return request<Blob>('/admin/scheduled-jobs/logs/export', {
+  return request<Blob>('/api/v1/admin/scheduled-jobs/logs/export', {
     method: 'GET',
     params: { ids: ids.join(',') },
     responseType: 'blob',

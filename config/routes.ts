@@ -124,6 +124,12 @@ export default [
         access: 'canViewAgentAudits',
       },
       {
+        name: 'audits',
+        path: '/admin/audits',
+        component: './admin/audits',
+        access: 'canViewAdminAudits',
+      },
+      {
         name: 'roles',
         path: '/admin/roles',
         component: './admin/roles',

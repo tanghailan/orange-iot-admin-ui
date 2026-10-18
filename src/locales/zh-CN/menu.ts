@@ -16,6 +16,7 @@ export default {
   'menu.roles': '角色管理',
   'menu.menus': '菜单管理',
   'menu.permissions': '权限管理',
+  'menu.audits': '统一审计',
   'menu.exception.403': '403',
   'menu.exception.404': '404',
   'menu.exception.500': '500',

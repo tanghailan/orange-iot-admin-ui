@@ -12,12 +12,9 @@
 const target = process.env.IOT_ADMIN_API_URL || 'http://localhost:8811';
 
 const adminProxy = {
-  '/admin/': {
+  '/api/v1/admin/': {
     target,
     changeOrigin: true,
-    pathRewrite: {
-      '^/admin': '/api/v1/admin',
-    },
   },
 };
 

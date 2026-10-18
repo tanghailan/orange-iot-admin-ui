@@ -26,7 +26,7 @@ npm ci
 npm run dev
 ```
 
-开发代理会将 `/admin/*` 请求转发到 Admin 服务，并改写为 `/api/v1/admin/*`。默认目标地址为 `http://localhost:8811`。如需连接其他 Admin 服务，可设置 `IOT_ADMIN_API_URL`：
+开发代理会将 `/api/v1/admin/*` 请求转发到 Admin 服务。后台页面使用 `/admin/*`，与接口路径分开，避免刷新页面时被代理转成接口响应。默认目标地址为 `http://localhost:8811`。如需连接其他 Admin 服务，可设置 `IOT_ADMIN_API_URL`：
 
 ```bash
 IOT_ADMIN_API_URL=http://localhost:8811 npm run dev
@@ -42,7 +42,7 @@ IOT_ADMIN_API_URL=http://localhost:8811 npm run dev
 npm run build
 ```
 
-Umi 代理只在开发时生效。生产环境需在 Web 服务器或 Ingress 中配置同源转发：将 `/admin/` 请求转发到 Admin 服务的 `/api/v1/admin/`。浏览器会保存 Sa-Token 访问令牌，并通过 `Authorization` 请求头发送。
+Umi 代理只在开发时生效。生产环境需在 Web 服务器或 Ingress 中配置同源转发：将 `/api/v1/admin/` 请求转发到 Admin 服务的相同路径。浏览器会保存 Sa-Token 访问令牌，并通过 `Authorization` 请求头发送。
 
 ## 目录结构
 

@@ -3,7 +3,7 @@ import { request } from '@umijs/max';
 type RequestOptions = { [key: string]: any };
 
 const agentPath = (agentId: API.AgentId) =>
-  `/admin/agents/${encodeURIComponent(String(agentId))}`;
+  `/api/v1/admin/agents/${encodeURIComponent(String(agentId))}`;
 
 const extractAgentNodes = (
   data: API.AgentTreeResponse | undefined,
@@ -27,9 +27,9 @@ export function flattenAgentTree(
   ]);
 }
 
-/** GET /api/v1/admin/agents/tree (the dev proxy maps /admin to /api/v1/admin) */
+/** GET /api/v1/admin/agents/tree */
 export async function getAgentTree(options?: RequestOptions) {
-  return request<API.ApiResponse<API.AgentTreeResponse>>('/admin/agents/tree', {
+  return request<API.ApiResponse<API.AgentTreeResponse>>('/api/v1/admin/agents/tree', {
     method: 'GET',
     ...(options || {}),
   });
@@ -40,7 +40,7 @@ export async function createAgent(
   body: API.AgentCreateRequest,
   options?: RequestOptions,
 ) {
-  return request<API.ApiResponse<API.AgentTreeNode>>('/admin/agents', {
+  return request<API.ApiResponse<API.AgentTreeNode>>('/api/v1/admin/agents', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -133,7 +133,7 @@ export async function transferDevice(
   options?: RequestOptions,
 ) {
   return request<API.ApiResponse<void>>(
-    `/admin/devices/${encodeURIComponent(deviceId)}/transfer`,
+    `/api/v1/admin/devices/${encodeURIComponent(deviceId)}/transfer`,
     {
       method: 'POST',
       headers: {
