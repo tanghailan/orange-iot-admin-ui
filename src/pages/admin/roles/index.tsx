@@ -320,6 +320,7 @@ const AdminRolesPage = () => {
         onCancel={() => setEditing(undefined)}
         confirmLoading={saving}
         width={760}
+        forceRender
         destroyOnHidden
       >
         <Form form={form} layout="vertical">
