@@ -4,10 +4,11 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import { LoginForm, ProFormText } from '@ant-design/pro-components';
-import { Helmet, history, useIntl, useModel } from '@umijs/max';
+import { Helmet, history, Link, useIntl, useModel } from '@umijs/max';
 import { App } from 'antd';
 import { createStyles } from 'antd-style';
 import React from 'react';
+import { flushSync } from 'react-dom';
 import { adminLogin } from '@/services/iot';
 import Settings from '../../../../config/defaultSettings';
 
@@ -37,6 +38,18 @@ const getSafeRedirectUrl = (redirect: string | null): string => {
   } catch {
     return fallback;
   }
+};
+
+const getPrefetchUrl = (redirectUrl: string): string => {
+  const redirectTargets: Record<string, string> = {
+    '/': '/iot/dashboard',
+    '/iot': '/iot/dashboard',
+    '/operations': '/operations/messages',
+    '/admin': '/admin/users',
+    '/exception': '/exception/403',
+  };
+  const pathname = new URL(redirectUrl, window.location.origin).pathname;
+  return redirectTargets[pathname] || redirectUrl;
 };
 
 const useStyles = createStyles(() => ({
@@ -371,20 +384,30 @@ const Login: React.FC = () => {
   const { styles } = useStyles();
   const { message } = App.useApp();
   const intl = useIntl();
+  const redirectUrl = getSafeRedirectUrl(
+    new URL(window.location.href).searchParams.get('redirect'),
+  );
+  const prefetchUrl = getPrefetchUrl(redirectUrl);
 
   const fetchUserInfo = async (): Promise<API.CurrentUser | undefined> => {
-    const userInfo = await initialState?.fetchUserInfo?.();
+    // The token is already stored, so these requests can run at the same time.
+    const [userInfo, accessCodes, menus] = await Promise.all([
+      initialState?.fetchUserInfo?.() || Promise.resolve(undefined),
+      initialState?.fetchAccessCodes?.() || Promise.resolve([]),
+      initialState?.fetchMenus?.() || Promise.resolve([]),
+    ]);
+
     if (userInfo) {
-      const [accessCodes, menus] = await Promise.all([
-        initialState?.fetchAccessCodes?.() || Promise.resolve([]),
-        initialState?.fetchMenus?.() || Promise.resolve([]),
-      ]);
-      setInitialState((state) => ({
-        ...state,
-        currentUser: userInfo,
-        accessCodes,
-        menus,
-      }));
+      // Commit auth state before changing routes so onPageChange cannot see a
+      // stale unauthenticated state during the navigation.
+      flushSync(() => {
+        void setInitialState((state) => ({
+          ...state,
+          currentUser: userInfo,
+          accessCodes,
+          menus,
+        }));
+      });
     }
     return userInfo;
   };
@@ -414,8 +437,6 @@ const Login: React.FC = () => {
         }
 
         message.success(defaultLoginSuccessMessage);
-        const urlParams = new URL(window.location.href).searchParams;
-        const redirectUrl = getSafeRedirectUrl(urlParams.get('redirect'));
         history.replace(redirectUrl);
       }
     } catch (error) {
@@ -427,6 +448,14 @@ const Login: React.FC = () => {
 
   return (
     <div className={styles.container}>
+      {/* Load the destination route while the user is entering credentials. */}
+      <Link
+        to={prefetchUrl}
+        prefetch="render"
+        aria-hidden="true"
+        tabIndex={-1}
+        style={{ display: 'none' }}
+      />
       <Helmet>
         <title>
           {intl.formatMessage({

@@ -154,8 +154,9 @@ export async function getInitialState(): Promise<{
     )
   ) {
     const currentUser = await fetchUserInfo();
-    const accessCodes = currentUser ? await fetchAccessCodes() : [];
-    const menus = currentUser ? await fetchMenus() : [];
+    const [accessCodes, menus] = currentUser
+      ? await Promise.all([fetchAccessCodes(), fetchMenus()])
+      : [[], []];
     return {
       fetchUserInfo,
       fetchAccessCodes,
