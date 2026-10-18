@@ -5,7 +5,6 @@ import {
   DashboardOutlined,
   DownloadOutlined,
   LineChartOutlined,
-  LinkOutlined,
   MenuOutlined,
   MessageOutlined,
   MobileOutlined,
@@ -43,7 +42,6 @@ import {
 import defaultSettings from '../config/defaultSettings';
 import { errorConfig } from './requestErrorConfig';
 
-const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/user/login';
 
 const firstMenuPath = (
@@ -229,19 +227,6 @@ export const layout: RunTimeLayoutConfig = ({
         }
       }
     },
-    links: isDev
-      ? [
-          <a
-            key="openapi"
-            href={__ORANGE_IOT_OPENAPI_DOCS_URL__}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <LinkOutlined />
-            <span>OpenAPI 文档</span>
-          </a>,
-        ]
-      : [],
     // Replace ProLayout's default ErrorBoundary with our offline-aware version,
     // so chunk load errors show friendly messages instead of "Something went wrong."
     ErrorBoundary,

@@ -34,15 +34,6 @@ IOT_ADMIN_API_URL=http://localhost:8811 npm run dev
 
 `start:test` 和 `start:pre` 使用相同的代理目标及路径改写。
 
-开发环境右上角的 `OpenAPI 文档` 入口直接打开 Admin 服务的 Knife4j 文档，默认地址为
-`http://localhost:8811/doc.html`。如需使用其他地址，可设置 `IOT_OPENAPI_DOCS_URL`：
-
-```bash
-IOT_OPENAPI_DOCS_URL=http://localhost:8811/doc.html npm run dev
-```
-
-后端原始 OpenAPI 定义地址为 `http://localhost:8811/v3/api-docs/admin`。
-
 ## 生产部署
 
 构建静态前端：

@@ -8,10 +8,6 @@ import proxy from './proxy';
 import routes from './routes';
 
 const { UMI_ENV = 'dev' } = process.env;
-const adminApiTarget = process.env.IOT_ADMIN_API_URL || 'http://localhost:8811';
-const openApiDocsUrl =
-  process.env.IOT_OPENAPI_DOCS_URL ||
-  `${adminApiTarget.replace(/\/$/, '')}/doc.html`;
 
 // Compute commit hash: env vars take precedence, fall back to git at build time
 const commitHash =
@@ -211,7 +207,6 @@ export default defineConfig({
   define: {
     'process.env.CI': process.env.CI,
     'process.env.COMMIT_HASH': commitHash,
-    __ORANGE_IOT_OPENAPI_DOCS_URL__: JSON.stringify(openApiDocsUrl),
     __APP_VERSION__: require('./../package.json').version,
     __UMI_VERSION__: require('@umijs/max/package.json').version,
     __UTOO_VERSION__: require('@utoo/pack/package.json').version,

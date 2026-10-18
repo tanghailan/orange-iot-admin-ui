@@ -11,15 +11,19 @@ const mockHistory = {
   replace: mockReplace,
 };
 
-const mockQueryCurrentUser = vi.fn();
+const mockGetCurrentUserInfo = vi.fn();
+const mockGetCurrentAccessCodes = vi.fn();
+const mockGetCurrentMenus = vi.fn();
 
 vi.mock('@umijs/max', () => ({
   history: mockHistory,
   Link: ({ children }: any) => children,
 }));
 
-vi.mock('@/services/ant-design-pro/api', () => ({
-  currentUser: mockQueryCurrentUser,
+vi.mock('@/services/iot', () => ({
+  getCurrentUserInfo: mockGetCurrentUserInfo,
+  getCurrentAccessCodes: mockGetCurrentAccessCodes,
+  getCurrentMenus: mockGetCurrentMenus,
 }));
 
 vi.mock('@/components', () => ({
@@ -37,7 +41,20 @@ vi.mock('@ant-design/pro-components', () => ({
 }));
 
 vi.mock('@ant-design/icons', () => ({
-  LinkOutlined: () => null,
+  ApiOutlined: () => null,
+  AppstoreOutlined: () => null,
+  CloudOutlined: () => null,
+  DashboardOutlined: () => null,
+  DownloadOutlined: () => null,
+  LineChartOutlined: () => null,
+  MenuOutlined: () => null,
+  MessageOutlined: () => null,
+  MobileOutlined: () => null,
+  SafetyOutlined: () => null,
+  ScheduleOutlined: () => null,
+  SettingOutlined: () => null,
+  TeamOutlined: () => null,
+  UserOutlined: () => null,
 }));
 
 vi.mock('./requestErrorConfig', () => ({
@@ -60,17 +77,19 @@ describe('app getInitialState', () => {
 
   it('should fetch currentUser when not on login page', async () => {
     const { getInitialState } = await import('./app');
-    mockQueryCurrentUser.mockResolvedValue({
+    mockGetCurrentUserInfo.mockResolvedValue({
+      code: 0,
       data: {
-        name: 'Test User',
-        access: 'admin',
+        username: 'test',
+        realName: 'Test User',
+        roles: ['super_admin'],
       },
     });
 
     const state = await getInitialState();
 
-    expect(mockQueryCurrentUser).toHaveBeenCalled();
-    expect(state.currentUser).toEqual({
+    expect(mockGetCurrentUserInfo).toHaveBeenCalled();
+    expect(state.currentUser).toMatchObject({
       name: 'Test User',
       access: 'admin',
     });
@@ -80,7 +99,7 @@ describe('app getInitialState', () => {
 
   it('should redirect to login when currentUser fetch fails (401)', async () => {
     const { getInitialState } = await import('./app');
-    mockQueryCurrentUser.mockRejectedValue(new Error('401 Unauthorized'));
+    mockGetCurrentUserInfo.mockRejectedValue(new Error('401 Unauthorized'));
 
     const state = await getInitialState();
 
@@ -100,7 +119,7 @@ describe('app getInitialState', () => {
 
     const state = await getInitialState();
 
-    expect(mockQueryCurrentUser).not.toHaveBeenCalled();
+    expect(mockGetCurrentUserInfo).not.toHaveBeenCalled();
     expect(state.currentUser).toBeUndefined();
     expect(state.fetchUserInfo).toBeDefined();
   });
@@ -112,7 +131,7 @@ describe('app getInitialState', () => {
       search: '?page=2',
       hash: '#section',
     };
-    mockQueryCurrentUser.mockRejectedValue(new Error('401'));
+    mockGetCurrentUserInfo.mockRejectedValue(new Error('401'));
 
     await getInitialState();
 
@@ -123,7 +142,8 @@ describe('app getInitialState', () => {
 
   it('should include default settings in initial state', async () => {
     const { getInitialState } = await import('./app');
-    mockQueryCurrentUser.mockResolvedValue({
+    mockGetCurrentUserInfo.mockResolvedValue({
+      code: 0,
       data: { name: 'User' },
     });
 
@@ -134,13 +154,18 @@ describe('app getInitialState', () => {
 
   it('fetchUserInfo should return user data on success', async () => {
     const { getInitialState } = await import('./app');
-    mockQueryCurrentUser.mockResolvedValue({
-      data: { name: 'Fetched User', access: 'user' },
+    mockGetCurrentUserInfo.mockResolvedValue({
+      code: 0,
+      data: {
+        username: 'fetched',
+        realName: 'Fetched User',
+        roles: [],
+      },
     });
 
     const state = await getInitialState();
 
     const user = await state.fetchUserInfo?.();
-    expect(user).toEqual({ name: 'Fetched User', access: 'user' });
+    expect(user).toMatchObject({ name: 'Fetched User', access: 'user' });
   });
 });

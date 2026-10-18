@@ -34,16 +34,6 @@ IOT_ADMIN_API_URL=http://localhost:8811 npm run dev
 
 The `start:test` and `start:pre` scripts use the same proxy target and rewrite.
 
-The `OpenAPI 文档` entry in development opens the Admin service's Knife4j documentation,
-using `http://localhost:8811/doc.html` by default. Override it with `IOT_OPENAPI_DOCS_URL`:
-
-```bash
-IOT_OPENAPI_DOCS_URL=http://localhost:8811/doc.html npm run dev
-```
-
-The raw backend OpenAPI definition is available at
-`http://localhost:8811/v3/api-docs/admin`.
-
 ## Production
 
 Build the static application:
