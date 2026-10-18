@@ -5,6 +5,7 @@ import {
 } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { useAccess } from '@umijs/max';
+import type { TreeSelectProps } from 'antd';
 import {
   Button,
   Form,
@@ -16,11 +17,12 @@ import {
   Switch,
   Table,
   Tag,
+  TreeSelect,
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { Key } from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   createAdminUser,
   getAdminUsers,
@@ -32,6 +34,38 @@ import {
   updateAdminUserStatus,
 } from '@/services/iot';
 import { downloadCsv } from '@/utils/exportCsv';
+
+type AgentTreeOption = NonNullable<TreeSelectProps['treeData']>[number];
+
+const buildAgentTreeData = (
+  agents: API.AdminAssignableAgentResponse[],
+): AgentTreeOption[] => {
+  const nodes = new Map<string, AgentTreeOption>();
+  agents.forEach((agent) => {
+    nodes.set(String(agent.id), {
+      key: String(agent.id),
+      value: agent.id,
+      title: `${agent.name}${agent.agentCode ? `（${agent.agentCode}）` : ''}`,
+      children: [],
+    });
+  });
+
+  const roots: AgentTreeOption[] = [];
+  agents.forEach((agent) => {
+    const node = nodes.get(String(agent.id));
+    if (!node) return;
+    const parent =
+      agent.parentId !== null && agent.parentId !== undefined
+        ? nodes.get(String(agent.parentId))
+        : undefined;
+    if (parent) {
+      parent.children?.push(node);
+    } else {
+      roots.push(node);
+    }
+  });
+  return roots;
+};
 
 const AdminUsersPage = () => {
   const access = useAccess();
@@ -55,12 +89,7 @@ const AdminUsersPage = () => {
   const [agentForm] = Form.useForm();
   const [passwordForm] = Form.useForm();
 
-  const agentOptions = agents.map((agent) => ({
-    value: agent.id,
-    label: `${'　'.repeat(agent.depth || 0)}${agent.name}${
-      agent.agentCode ? `（${agent.agentCode}）` : ''
-    }`,
-  }));
+  const agentTreeData = useMemo(() => buildAgentTreeData(agents), [agents]);
 
   const loadData = useCallback(
     async (nextPage: number, nextKeyword: string) => {
@@ -424,12 +453,15 @@ const AdminUsersPage = () => {
                 label="所属代理"
                 rules={[{ required: true, message: '请选择所属代理' }]}
               >
-                <Select
+                <TreeSelect
+                  treeData={agentTreeData}
                   loading={agentsLoading}
-                  options={agentOptions}
                   placeholder="选择所属代理"
-                  showSearch={{ optionFilterProp: 'label' }}
+                  showSearch
+                  treeNodeLabelProp="title"
+                  treeNodeFilterProp="title"
                   notFoundContent={agentsLoading ? '加载中...' : '暂无可选代理'}
+                  style={{ width: '100%' }}
                 />
               </Form.Item>
             </>
@@ -469,12 +501,15 @@ const AdminUsersPage = () => {
             label="所属代理"
             rules={[{ required: true, message: '请选择所属代理' }]}
           >
-            <Select
+            <TreeSelect
+              treeData={agentTreeData}
               loading={agentsLoading}
-              options={agentOptions}
               placeholder="选择所属代理"
-              showSearch={{ optionFilterProp: 'label' }}
+              showSearch
+              treeNodeLabelProp="title"
+              treeNodeFilterProp="title"
               notFoundContent={agentsLoading ? '加载中...' : '暂无可选代理'}
+              style={{ width: '100%' }}
             />
           </Form.Item>
         </Form>

@@ -318,12 +318,16 @@ declare namespace API {
   };
 
   type AgentProductResponse = {
-    id: number;
+    id?: number;
+    productId?: number;
     name: string;
     productKey?: string;
     status?: number;
+    productStatus?: number;
     authorized?: boolean;
     granted?: boolean;
+    directGranted?: boolean;
+    effectivelyGranted?: boolean;
   };
 
   type AgentProductsResponse =

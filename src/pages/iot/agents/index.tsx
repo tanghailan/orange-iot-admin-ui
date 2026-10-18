@@ -141,9 +141,12 @@ const toTreeData = (agents: AgentRow[]): TreeDataNode[] =>
     title: (
       <Space size={6}>
         <Typography.Text ellipsis>{agent.name}</Typography.Text>
-        <Tag color={agent.status === 1 ? 'green' : 'default'}>
+        <Typography.Text
+          type={agent.status === 1 ? 'success' : 'secondary'}
+          style={{ fontSize: 12, whiteSpace: 'nowrap' }}
+        >
           {agent.status === 1 ? '启用' : '停用'}
-        </Tag>
+        </Typography.Text>
       </Space>
     ),
     children: toTreeData(agent.children),
@@ -154,11 +157,24 @@ const productIdsFromResponse = (
 ): number[] => {
   if (Array.isArray(data)) {
     return data
-      .filter((product) => product.authorized ?? product.granted ?? true)
-      .map((product) => product.id);
+      .filter(
+        (product) =>
+          product.directGranted ??
+          product.authorized ??
+          product.granted ??
+          true,
+      )
+      .map((product) => product.id ?? product.productId)
+      .filter((id): id is number => id !== undefined);
   }
   if (data?.productIds) return data.productIds;
-  return (data?.products || data?.list || []).map((product) => product.id);
+  return (data?.products || data?.list || [])
+    .filter(
+      (product) =>
+        product.directGranted ?? product.authorized ?? product.granted ?? true,
+    )
+    .map((product) => product.id ?? product.productId)
+    .filter((id): id is number => id !== undefined);
 };
 
 const ensureSuccess = <T,>(response: API.ApiResponse<T>, fallback: string) => {
@@ -364,9 +380,7 @@ const AgentManagement: React.FC = () => {
       );
     } catch (error) {
       setProductsModalAgent(undefined);
-      message.error(
-        getErrorMessage(error, '代理产品授权加载失败'),
-      );
+      message.error(getErrorMessage(error, '代理产品授权加载失败'));
     } finally {
       setProductsLoading(false);
     }
@@ -385,9 +399,7 @@ const AgentManagement: React.FC = () => {
       message.success('产品授权已更新');
       setProductsModalAgent(undefined);
     } catch (error) {
-      message.error(
-        getErrorMessage(error, '产品授权保存失败'),
-      );
+      message.error(getErrorMessage(error, '产品授权保存失败'));
     } finally {
       setSaving(false);
     }
@@ -626,11 +638,7 @@ const AgentManagement: React.FC = () => {
                         cancelText="取消"
                         onConfirm={() => void handleDisable(selectedAgent)}
                       >
-                        <Button
-                          danger
-                          icon={<StopOutlined />}
-                          loading={saving}
-                        >
+                        <Button danger icon={<StopOutlined />} loading={saving}>
                           停用
                         </Button>
                       </Popconfirm>
