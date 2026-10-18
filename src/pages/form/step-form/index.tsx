@@ -13,6 +13,7 @@ import {
   Descriptions,
   Divider,
   Form,
+  Input,
   Result,
   Statistic,
 } from 'antd';
@@ -197,10 +198,18 @@ const StepForm: React.FC<Record<string, any>> = () => {
                   margin: '24px 0',
                 }}
               />
+              <Form.Item
+                name="username"
+                hidden
+                initialValue={stepData.payAccount}
+              >
+                <Input autoComplete="username" tabIndex={-1} />
+              </Form.Item>
               <ProFormText.Password
                 label="支付密码"
                 width="md"
                 name="password"
+                fieldProps={{ autoComplete: 'current-password' }}
                 required={false}
                 rules={[
                   {
