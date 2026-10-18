@@ -377,6 +377,7 @@ const AdminPermissionsPage = () => {
         onOk={() => void submit()}
         onCancel={() => setEditing(undefined)}
         confirmLoading={saving}
+        forceRender
         destroyOnHidden
       >
         <Form form={form} layout="vertical">

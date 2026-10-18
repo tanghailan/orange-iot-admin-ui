@@ -322,6 +322,7 @@ const AdminUsersPage = () => {
         onOk={() => void submitUser()}
         onCancel={() => setUserModal(null)}
         confirmLoading={saving}
+        forceRender
         destroyOnHidden
       >
         <Form form={userForm} layout="vertical">
@@ -372,6 +373,7 @@ const AdminUsersPage = () => {
           passwordForm.resetFields();
         }}
         confirmLoading={saving}
+        forceRender
         destroyOnHidden
       >
         <Form form={passwordForm} layout="vertical">

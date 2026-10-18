@@ -375,6 +375,7 @@ const ProductManagement: React.FC = () => {
         closable={!saveMutation.isPending}
         mask={{ closable: !saveMutation.isPending }}
         width="min(600px, calc(100vw - 32px))"
+        forceRender
         destroyOnHidden
       >
         <Form<ProductFormValues>

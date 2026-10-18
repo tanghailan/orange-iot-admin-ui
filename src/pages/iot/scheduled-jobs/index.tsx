@@ -687,6 +687,7 @@ const ScheduledJobsPage: React.FC = () => {
         confirmLoading={saveMutation.isPending}
         okText="保存"
         cancelText="取消"
+        forceRender
         destroyOnHidden
       >
         <Form<JobFormValues>

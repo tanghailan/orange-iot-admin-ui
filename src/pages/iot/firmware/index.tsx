@@ -652,6 +652,7 @@ const FirmwareManagement: React.FC = () => {
                 products.length === 0)),
         }}
         cancelButtonProps={{ disabled: isUploading || saveMutation.isPending }}
+        forceRender
         destroyOnHidden
       >
         <Form<FirmwareFormValues>

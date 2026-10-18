@@ -503,6 +503,7 @@ const SystemConfigManagement: React.FC = () => {
         closable={!saveMutation.isPending}
         mask={{ closable: !saveMutation.isPending }}
         width="min(640px, calc(100vw - 32px))"
+        forceRender
         destroyOnHidden
       >
         <Form<ConfigFormValues>
