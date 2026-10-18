@@ -191,7 +191,8 @@ const ProductManagement: React.FC = () => {
     {
       title: '操作',
       valueType: 'option',
-      width: 140,
+      width: 180,
+      className: 'iot-action-cell',
       fixed: 'right',
       render: (_, record) => {
         const rowDeleteLoading =

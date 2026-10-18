@@ -282,9 +282,10 @@ const AdminUsersPage = () => {
     { title: '创建时间', dataIndex: 'createdAt', width: 190 },
     {
       title: '操作',
-      width: 280,
+      width: 360,
+      className: 'iot-action-cell',
       render: (_, user) => (
-        <Space>
+        <Space className="iot-table-actions" size={4}>
           {access.canUpdateAdminUser &&
             !user.roles.some((role) => role.roleCode === 'super_admin') && (
               <Button type="link" onClick={() => setAgentUser(user)}>
@@ -366,6 +367,8 @@ const AdminUsersPage = () => {
       <Table
         rowKey="id"
         loading={loading}
+        className="iot-admin-table"
+        tableLayout="fixed"
         columns={columns}
         dataSource={rows}
         rowSelection={{

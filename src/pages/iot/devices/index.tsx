@@ -395,7 +395,8 @@ const DeviceManagement: React.FC = () => {
     {
       title: '操作',
       valueType: 'option',
-      width: 360,
+      width: 420,
+      className: 'iot-action-cell',
       fixed: 'right',
       render: (_, record) => {
         const rowDeleteLoading =

@@ -26,6 +26,7 @@ import type { Key } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   deleteAdminRole,
+  getAdminMenus,
   getAdminPermissions,
   getAdminRoles,
   saveAdminRole,
@@ -36,6 +37,7 @@ import { PermissionPicker } from '../shared';
 const AdminRolesPage = () => {
   const access = useAccess();
   const [roles, setRoles] = useState<API.AdminRoleResponse[]>([]);
+  const [menus, setMenus] = useState<API.AdminMenuResponse[]>([]);
   const [permissions, setPermissions] = useState<API.AdminPermissionResponse[]>(
     [],
   );
@@ -56,11 +58,13 @@ const AdminRolesPage = () => {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [roleList, permissionList] = await Promise.all([
+      const [roleList, menuList, permissionList] = await Promise.all([
         getAdminRoles(),
+        getAdminMenus(),
         getAdminPermissions(),
       ]);
       setRoles(roleList);
+      setMenus(menuList);
       setPermissions(permissionList);
       setSelectedKeys([]);
       setSelectedRows([]);
@@ -188,7 +192,8 @@ const AdminRolesPage = () => {
     },
     {
       title: '操作',
-      width: 240,
+      width: 300,
+      className: 'iot-action-cell',
       render: (_, role) =>
         role.builtIn === 1 ? (
           <Button
@@ -203,7 +208,7 @@ const AdminRolesPage = () => {
             查看授权
           </Button>
         ) : (
-          <Space>
+          <Space className="iot-table-actions" size={4}>
             {access.canUpdateAdminRole && (
               <>
                 <Button
@@ -343,6 +348,8 @@ const AdminRolesPage = () => {
       <Table
         rowKey="id"
         loading={loading}
+        className="iot-admin-table"
+        tableLayout="fixed"
         columns={columns}
         dataSource={filteredRoles}
         pagination={false}
@@ -398,15 +405,15 @@ const AdminRolesPage = () => {
               rules={[
                 { required: true, max: 64 },
                 {
-                  pattern: /^[a-z][a-z0-9]*(?::[a-z][a-z0-9-]*){1,5}$/,
-                  message: '使用小写字母、数字和冒号',
+                  pattern: /^[a-z][a-z0-9]*(?::[a-z][a-z0-9-]*){0,5}$/,
+                  message: '以小写字母开头，可使用小写字母、数字、冒号和连字符',
                 },
               ]}
               style={{ flex: 1 }}
             >
               <Input
                 disabled={!editing || Boolean(editing?.id)}
-                placeholder="例如：iot:operator"
+                placeholder="例如：operator 或 iot:operator"
               />
             </Form.Item>
           </Space>
@@ -441,6 +448,7 @@ const AdminRolesPage = () => {
               }}
             >
               <PermissionPicker
+                menus={menus}
                 permissions={permissions}
                 value={checkedIds}
                 onChange={setCheckedIds}

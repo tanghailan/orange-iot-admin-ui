@@ -205,9 +205,10 @@ const AdminMenusPage = () => {
     { title: '排序', dataIndex: 'sortOrder', width: 80 },
     {
       title: '操作',
-      width: 150,
+      width: 180,
+      className: 'iot-action-cell',
       render: (_, menu) => (
-        <Space>
+        <Space className="iot-table-actions" size={4}>
           {access.canUpdateAdminMenu && (
             <Button type="link" onClick={() => setEditing(menu)}>
               编辑
@@ -347,6 +348,8 @@ const AdminMenusPage = () => {
       <Table
         rowKey="menuCode"
         loading={loading}
+        className="iot-admin-table"
+        tableLayout="fixed"
         columns={columns}
         dataSource={buildMenuTree(filteredMenus)}
         pagination={false}

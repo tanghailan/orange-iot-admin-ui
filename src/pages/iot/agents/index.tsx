@@ -40,6 +40,7 @@ import {
   updateAgent,
   updateAgentProducts,
 } from '@/services/iot';
+import { getErrorMessage } from '@/utils/errorMessage';
 
 type AgentRow = {
   id: API.AgentId;
@@ -131,6 +132,9 @@ const getDescendantIds = (agent: AgentRow): Set<string> => {
   return ids;
 };
 
+const isDirectAgent = (agent: AgentRow) =>
+  agent.parentId === null || agent.agentCode === 'DIRECT';
+
 const toTreeData = (agents: AgentRow[]): TreeDataNode[] =>
   agents.map((agent) => ({
     key: String(agent.id),
@@ -194,7 +198,7 @@ const AgentManagement: React.FC = () => {
         return nextAgents[0] ? String(nextAgents[0].id) : undefined;
       });
     } catch (error) {
-      message.error(error instanceof Error ? error.message : '代理树加载失败');
+      message.error(getErrorMessage(error, '代理树加载失败'));
     } finally {
       setLoading(false);
     }
@@ -264,26 +268,33 @@ const AgentManagement: React.FC = () => {
     setSaving(true);
     try {
       if (agentModal?.mode === 'edit') {
-        const response = await updateAgent(agentModal.agent.id, {
-          name: values.name.trim(),
-          description: values.description?.trim() || undefined,
-        });
+        const response = await updateAgent(
+          agentModal.agent.id,
+          {
+            name: values.name.trim(),
+            description: values.description?.trim() || undefined,
+          },
+          { skipErrorHandler: true },
+        );
         ensureSuccess(response, '代理更新失败');
         message.success('代理已更新');
       } else if (agentModal?.mode === 'create') {
-        const response = await createAgent({
-          agentCode: values.agentCode?.trim() || '',
-          name: values.name.trim(),
-          parentId: values.parentId || null,
-          description: values.description?.trim() || undefined,
-        });
+        const response = await createAgent(
+          {
+            agentCode: values.agentCode?.trim() || '',
+            name: values.name.trim(),
+            parentId: values.parentId || null,
+            description: values.description?.trim() || undefined,
+          },
+          { skipErrorHandler: true },
+        );
         ensureSuccess(response, '代理创建失败');
         message.success('代理已创建');
       }
       setAgentModal(null);
       await loadAgents();
     } catch (error) {
-      message.error(error instanceof Error ? error.message : '代理保存失败');
+      message.error(getErrorMessage(error, '代理保存失败'));
     } finally {
       setSaving(false);
     }
@@ -305,15 +316,17 @@ const AgentManagement: React.FC = () => {
     if (!moveModalAgent) return;
     setSaving(true);
     try {
-      const response = await moveAgent(moveModalAgent.id, {
-        parentId: values.parentId || null,
-      });
+      const response = await moveAgent(
+        moveModalAgent.id,
+        { parentId: values.parentId || null },
+        { skipErrorHandler: true },
+      );
       ensureSuccess(response, '代理移动失败');
       message.success('代理层级已调整');
       setMoveModalAgent(undefined);
       await loadAgents();
     } catch (error) {
-      message.error(error instanceof Error ? error.message : '代理移动失败');
+      message.error(getErrorMessage(error, '代理移动失败'));
     } finally {
       setSaving(false);
     }
@@ -322,12 +335,14 @@ const AgentManagement: React.FC = () => {
   const handleDisable = async (agent: AgentRow) => {
     setSaving(true);
     try {
-      const response = await disableAgent(agent.id);
+      const response = await disableAgent(agent.id, {
+        skipErrorHandler: true,
+      });
       ensureSuccess(response, '代理停用失败');
       message.success('代理已停用');
       await loadAgents();
     } catch (error) {
-      message.error(error instanceof Error ? error.message : '代理停用失败');
+      message.error(getErrorMessage(error, '代理停用失败'));
     } finally {
       setSaving(false);
     }
@@ -350,7 +365,7 @@ const AgentManagement: React.FC = () => {
     } catch (error) {
       setProductsModalAgent(undefined);
       message.error(
-        error instanceof Error ? error.message : '代理产品授权加载失败',
+        getErrorMessage(error, '代理产品授权加载失败'),
       );
     } finally {
       setProductsLoading(false);
@@ -361,15 +376,17 @@ const AgentManagement: React.FC = () => {
     if (!productsModalAgent) return;
     setSaving(true);
     try {
-      const response = await updateAgentProducts(productsModalAgent.id, {
-        productIds: grantedProductIds,
-      });
+      const response = await updateAgentProducts(
+        productsModalAgent.id,
+        { productIds: grantedProductIds },
+        { skipErrorHandler: true },
+      );
       ensureSuccess(response, '产品授权保存失败');
       message.success('产品授权已更新');
       setProductsModalAgent(undefined);
     } catch (error) {
       message.error(
-        error instanceof Error ? error.message : '产品授权保存失败',
+        getErrorMessage(error, '产品授权保存失败'),
       );
     } finally {
       setSaving(false);
@@ -385,17 +402,21 @@ const AgentManagement: React.FC = () => {
     const values = await transferForm.validateFields();
     setSaving(true);
     try {
-      const response = await transferDevice(values.deviceId.trim(), {
-        targetAgentId: values.targetAgentId,
-        reason: values.reason?.trim() || undefined,
-      });
+      const response = await transferDevice(
+        values.deviceId.trim(),
+        {
+          targetAgentId: values.targetAgentId,
+          reason: values.reason?.trim() || undefined,
+        },
+        { skipErrorHandler: true },
+      );
       ensureSuccess(response, '设备转移失败');
       message.success('设备归属已转移');
       setTransferModalOpen(false);
       transferForm.resetFields();
       await loadAgents();
     } catch (error) {
-      message.error(error instanceof Error ? error.message : '设备转移失败');
+      message.error(getErrorMessage(error, '设备转移失败'));
     } finally {
       setSaving(false);
     }
@@ -437,9 +458,10 @@ const AgentManagement: React.FC = () => {
     {
       title: '操作',
       valueType: 'option',
-      width: 270,
+      width: 300,
+      className: 'iot-action-cell',
       render: (_, record) => [
-        access.canUpdateAgent ? (
+        access.canUpdateAgent && !isDirectAgent(record) ? (
           <Button
             key="edit"
             type="link"
@@ -450,7 +472,7 @@ const AgentManagement: React.FC = () => {
             编辑
           </Button>
         ) : null,
-        access.canUpdateAgent ? (
+        access.canUpdateAgent && !isDirectAgent(record) ? (
           <Button
             key="move"
             type="link"
@@ -461,7 +483,9 @@ const AgentManagement: React.FC = () => {
             移动
           </Button>
         ) : null,
-        access.canDisableAgent && record.status === 1 ? (
+        access.canDisableAgent &&
+        record.status === 1 &&
+        !isDirectAgent(record) ? (
           <Popconfirm
             key="disable"
             title="确认停用这个代理？"
@@ -576,7 +600,7 @@ const AgentManagement: React.FC = () => {
                       编辑
                     </Button>
                   )}
-                  {access.canUpdateAgent && (
+                  {access.canUpdateAgent && !isDirectAgent(selectedAgent) && (
                     <Button
                       icon={<SwapOutlined />}
                       onClick={() => openMove(selectedAgent)}
@@ -592,19 +616,25 @@ const AgentManagement: React.FC = () => {
                       产品授权
                     </Button>
                   )}
-                  {access.canDisableAgent && selectedAgent.status === 1 && (
-                    <Popconfirm
-                      title="确认停用这个代理？"
-                      description="停用前请确认下级代理和设备仍有明确的运营安排。"
-                      okText="停用"
-                      cancelText="取消"
-                      onConfirm={() => void handleDisable(selectedAgent)}
-                    >
-                      <Button danger icon={<StopOutlined />} loading={saving}>
-                        停用
-                      </Button>
-                    </Popconfirm>
-                  )}
+                  {access.canDisableAgent &&
+                    selectedAgent.status === 1 &&
+                    !isDirectAgent(selectedAgent) && (
+                      <Popconfirm
+                        title="确认停用这个代理？"
+                        description="停用前请确认下级代理和设备仍有明确的运营安排。"
+                        okText="停用"
+                        cancelText="取消"
+                        onConfirm={() => void handleDisable(selectedAgent)}
+                      >
+                        <Button
+                          danger
+                          icon={<StopOutlined />}
+                          loading={saving}
+                        >
+                          停用
+                        </Button>
+                      </Popconfirm>
+                    )}
                 </Space>
               ) : undefined
             }

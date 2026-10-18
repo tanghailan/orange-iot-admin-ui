@@ -283,7 +283,8 @@ const ScheduledJobsPage: React.FC = () => {
     {
       title: '操作',
       key: 'actions',
-      width: 300,
+      width: 360,
+      className: 'iot-action-cell',
       fixed: 'right',
       render: (_, record) => (
         <Space>

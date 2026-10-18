@@ -377,7 +377,8 @@ const SystemConfigManagement: React.FC = () => {
     {
       title: '操作',
       valueType: 'option',
-      width: 190,
+      width: 220,
+      className: 'iot-action-cell',
       fixed: 'right',
       render: (_, record) => {
         const rowDeleteLoading =

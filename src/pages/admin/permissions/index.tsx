@@ -196,9 +196,10 @@ const AdminPermissionsPage = () => {
     },
     {
       title: '操作',
-      width: 140,
+      width: 180,
+      className: 'iot-action-cell',
       render: (_, permission) => (
-        <Space>
+        <Space className="iot-table-actions" size={4}>
           {access.canUpdateAdminPermission && (
             <Button type="link" onClick={() => setEditing(permission)}>
               编辑
@@ -350,6 +351,8 @@ const AdminPermissionsPage = () => {
       <Table
         rowKey="id"
         loading={loading}
+        className="iot-admin-table"
+        tableLayout="fixed"
         columns={columns}
         dataSource={visibleRows}
         rowSelection={{

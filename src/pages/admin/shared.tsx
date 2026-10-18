@@ -2,6 +2,7 @@ import type { TreeDataNode } from 'antd';
 import { Tree } from 'antd';
 
 type PermissionPickerProps = {
+  menus: API.AdminMenuResponse[];
   permissions: API.AdminPermissionResponse[];
   value: number[];
   onChange: (ids: number[]) => void;
@@ -9,39 +10,110 @@ type PermissionPickerProps = {
 };
 
 export function PermissionPicker({
+  menus,
   permissions,
   value,
   onChange,
   disabled = false,
 }: PermissionPickerProps) {
-  const modules = new Map<string, Map<string, API.AdminPermissionResponse[]>>();
+  const menuTree = buildMenuTree(menus.filter((menu) => menu.status === 1));
+  const directories = menuTree.filter((menu) => menu.menuType === 'DIRECTORY');
+  const pages = menuTree.flatMap((menu) =>
+    menu.menuType === 'DIRECTORY'
+      ? menu.children.filter((child) => child.menuType === 'PAGE')
+      : menu.menuType === 'PAGE'
+        ? [menu]
+        : [],
+  );
+  const permissionsByPage = new Map<
+    string,
+    API.AdminPermissionResponse[]
+  >();
+  const unassignedByDirectory = new Map<
+    string,
+    API.AdminPermissionResponse[]
+  >();
+
   permissions.forEach((permission) => {
-    const types = modules.get(permission.module) || new Map();
-    const items = types.get(permission.permissionType) || [];
+    const matchingPages = pages
+      .filter((page) => page.permissionCode)
+      .map((page) => {
+        const pagePermission = page.permissionCode as string;
+        const pageParts = pagePermission.split(':');
+        const pagePrefix = pageParts.slice(0, -1).join(':');
+        const matchesExact = pagePermission === permission.permissionCode;
+        const matchesPrefix =
+          pagePrefix.length > 0 &&
+          permission.permissionCode.startsWith(`${pagePrefix}:`);
+
+        return {
+          page,
+          score: matchesExact
+            ? Number.MAX_SAFE_INTEGER
+            : matchesPrefix
+              ? pagePrefix.length
+              : 0,
+        };
+      })
+      .filter(({ score }) => score > 0)
+      .sort((left, right) => right.score - left.score);
+    const page =
+      permission.permissionCode.startsWith('iot:command:')
+        ? pages.find((item) => item.menuCode === 'messages')
+        : matchingPages[0]?.page;
+
+    if (page) {
+      const items = permissionsByPage.get(page.menuCode) || [];
+      items.push(permission);
+      permissionsByPage.set(page.menuCode, items);
+      return;
+    }
+
+    const directoryCode =
+      permission.module === 'IoT'
+        ? 'iot'
+        : permission.module === '消息' || permission.module === '运维'
+          ? 'operations'
+          : 'platform';
+    const items = unassignedByDirectory.get(directoryCode) || [];
     items.push(permission);
-    types.set(permission.permissionType, items);
-    modules.set(permission.module, types);
+    unassignedByDirectory.set(directoryCode, items);
   });
 
-  const treeData: TreeDataNode[] = Array.from(modules.entries()).map(
-    ([module, types]) => ({
-      key: `module:${module}`,
-      title: module,
-      children: Array.from(types.entries()).map(([type, items]) => ({
-        key: `type:${module}:${type}`,
-        title:
-          type === 'MENU'
-            ? '菜单权限'
-            : type === 'ACTION'
-              ? '操作权限'
-              : '接口权限',
-        children: items.map((permission) => ({
-          key: String(permission.id),
-          title: `${permission.permissionName}（${permission.permissionCode}）`,
-        })),
-      })),
-    }),
-  );
+  const treeData: TreeDataNode[] = directories.map((directory) => ({
+    key: `menu:${directory.menuCode}`,
+    title: directory.menuName,
+    children: [
+      ...directory.children
+        .filter((page) => page.menuType === 'PAGE')
+        .map((page) => {
+          const pagePermissions = permissionsByPage.get(page.menuCode) || [];
+          return {
+            key: `menu:${page.menuCode}`,
+            title: page.menuName,
+            disableCheckbox: pagePermissions.length === 0,
+            children: pagePermissions.map((permission) => ({
+              key: String(permission.id),
+              title: `${permission.permissionName}（${permission.permissionCode}）`,
+            })),
+          };
+        }),
+      ...(unassignedByDirectory.get(directory.menuCode) || []).length
+        ? [
+            {
+              key: `unassigned:${directory.menuCode}`,
+              title: '未关联页面',
+              children: (
+                unassignedByDirectory.get(directory.menuCode) || []
+              ).map((permission) => ({
+                key: String(permission.id),
+                title: `${permission.permissionName}（${permission.permissionCode}）`,
+              })),
+            },
+          ]
+        : [],
+    ],
+  }));
 
   return (
     <Tree
