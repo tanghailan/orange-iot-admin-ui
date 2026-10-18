@@ -113,6 +113,12 @@ const AdminUsersPage = () => {
     }
   }, [roles, userForm, userModal]);
 
+  useEffect(() => {
+    if (!passwordUser) return;
+    passwordForm.resetFields();
+    passwordForm.setFieldsValue({ username: passwordUser.username });
+  }, [passwordForm, passwordUser]);
+
   const submitUser = async () => {
     const values = await userForm.validateFields();
     setSaving(true);
@@ -333,7 +339,7 @@ const AdminUsersPage = () => {
                 label="登录账号"
                 rules={[{ required: true, max: 64 }]}
               >
-                <Input autoComplete="off" />
+                <Input autoComplete="username" />
               </Form.Item>
               <Form.Item
                 name="password"
@@ -377,6 +383,9 @@ const AdminUsersPage = () => {
         destroyOnHidden
       >
         <Form form={passwordForm} layout="vertical">
+          <Form.Item name="username" hidden>
+            <Input autoComplete="username" tabIndex={-1} />
+          </Form.Item>
           <Form.Item
             name="password"
             label="新密码"

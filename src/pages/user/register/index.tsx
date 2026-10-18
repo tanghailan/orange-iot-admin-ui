@@ -178,7 +178,7 @@ const Register: FC = () => {
             },
           ]}
         >
-          <Input size="large" placeholder="邮箱" />
+          <Input size="large" placeholder="邮箱" autoComplete="username" />
         </FormItem>
         <Popover
           getPopupContainer={(node) => {
@@ -229,6 +229,7 @@ const Register: FC = () => {
               size="large"
               type="password"
               placeholder="至少6位密码，区分大小写"
+              autoComplete="new-password"
             />
           </FormItem>
         </Popover>
@@ -244,7 +245,12 @@ const Register: FC = () => {
             },
           ]}
         >
-          <Input size="large" type="password" placeholder="确认密码" />
+          <Input
+            size="large"
+            type="password"
+            placeholder="确认密码"
+            autoComplete="new-password"
+          />
         </FormItem>
         <FormItem
           name="mobile"
