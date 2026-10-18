@@ -718,7 +718,7 @@ const DeviceManagement: React.FC = () => {
           }
         }}
         confirmLoading={transferMutation.isPending}
-        destroyOnHidden
+        forceRender
       >
         <Form
           form={transferForm}
@@ -765,7 +765,7 @@ const DeviceManagement: React.FC = () => {
         closable={!saveMutation.isPending}
         mask={{ closable: !saveMutation.isPending }}
         width="min(600px, calc(100vw - 32px))"
-        destroyOnHidden
+        forceRender
       >
         <Form<DeviceFormValues>
           form={form}

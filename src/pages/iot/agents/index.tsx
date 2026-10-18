@@ -660,13 +660,13 @@ const AgentManagement: React.FC = () => {
                     </Typography.Text>
                   )}
                 </Descriptions.Item>
-                <Descriptions.Item label="上级代理" span={2}>
+                <Descriptions.Item label="上级代理" span="filled">
                   {selectedAgent.parentId === null
                     ? '平台直属'
                     : findAgent(agents, String(selectedAgent.parentId))?.name ||
                       String(selectedAgent.parentId)}
                 </Descriptions.Item>
-                <Descriptions.Item label="说明" span={2}>
+                <Descriptions.Item label="说明" span="filled">
                   {selectedAgent.description || '—'}
                 </Descriptions.Item>
               </Descriptions>
@@ -697,7 +697,7 @@ const AgentManagement: React.FC = () => {
         onOk={() => void submitAgent()}
         onCancel={() => setAgentModal(null)}
         confirmLoading={saving}
-        destroyOnHidden
+        forceRender
       >
         <Form form={agentForm} layout="vertical">
           {agentModal?.mode === 'create' && (
@@ -744,7 +744,7 @@ const AgentManagement: React.FC = () => {
         onOk={() => void submitMove()}
         onCancel={() => setMoveModalAgent(undefined)}
         confirmLoading={saving}
-        destroyOnHidden
+        forceRender
       >
         <Form form={moveForm} layout="vertical">
           <Form.Item
@@ -794,7 +794,7 @@ const AgentManagement: React.FC = () => {
         onOk={() => void submitTransfer()}
         onCancel={() => setTransferModalOpen(false)}
         confirmLoading={saving}
-        destroyOnHidden
+        forceRender
       >
         <Form form={transferForm} layout="vertical">
           <Form.Item
