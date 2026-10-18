@@ -5,12 +5,14 @@ type PermissionPickerProps = {
   permissions: API.AdminPermissionResponse[];
   value: number[];
   onChange: (ids: number[]) => void;
+  disabled?: boolean;
 };
 
 export function PermissionPicker({
   permissions,
   value,
   onChange,
+  disabled = false,
 }: PermissionPickerProps) {
   const modules = new Map<string, Map<string, API.AdminPermissionResponse[]>>();
   permissions.forEach((permission) => {
@@ -45,6 +47,7 @@ export function PermissionPicker({
     <Tree
       checkable
       defaultExpandAll
+      disabled={disabled}
       selectable={false}
       checkedKeys={value.map(String)}
       treeData={treeData}

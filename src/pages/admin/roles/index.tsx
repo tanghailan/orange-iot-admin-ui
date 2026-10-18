@@ -1,7 +1,10 @@
 import {
   DownloadOutlined,
+  EditOutlined,
+  EyeOutlined,
   PlusOutlined,
   ReloadOutlined,
+  SafetyCertificateOutlined,
 } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { useAccess } from '@umijs/max';
@@ -39,12 +42,16 @@ const AdminRolesPage = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<API.AdminRoleResponse>();
+  const [authorizing, setAuthorizing] = useState<API.AdminRoleResponse>();
+  const [viewing, setViewing] = useState<API.AdminRoleResponse>();
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState<number>();
   const [checkedIds, setCheckedIds] = useState<number[]>([]);
   const [selectedKeys, setSelectedKeys] = useState<Key[]>([]);
   const [selectedRows, setSelectedRows] = useState<API.AdminRoleResponse[]>([]);
   const [form] = Form.useForm();
+  const activeRole = editing || authorizing || viewing;
+  const canSaveRole = Boolean(editing || authorizing);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -114,30 +121,34 @@ const AdminRolesPage = () => {
   }, [loadData]);
 
   useEffect(() => {
-    if (!editing) {
+    if (!activeRole) {
       form.resetFields();
       setCheckedIds([]);
       return;
     }
     form.setFieldsValue({
-      roleCode: editing.roleCode,
-      roleName: editing.roleName,
-      description: editing.description,
-      status: editing.status,
+      roleCode: activeRole.roleCode,
+      roleName: activeRole.roleName,
+      description: activeRole.description,
+      status: activeRole.status,
     });
-    setCheckedIds(editing.permissionIds);
-  }, [editing, form]);
+    setCheckedIds(activeRole.permissionIds);
+  }, [activeRole, form]);
 
   const submit = async () => {
     const values = await form.validateFields();
+    if (!editing && !authorizing) return;
     setSaving(true);
     try {
       await saveAdminRole(
         { ...values, permissionIds: checkedIds },
-        editing?.id,
+        editing?.id || authorizing?.id,
       );
-      message.success(editing ? '角色已更新' : '角色已创建');
+      message.success(
+        authorizing ? '角色授权已更新' : editing?.id ? '角色已更新' : '角色已创建',
+      );
       setEditing(undefined);
+      setAuthorizing(undefined);
       await loadData();
     } catch (error) {
       message.error(error instanceof Error ? error.message : '角色保存失败');
@@ -177,16 +188,47 @@ const AdminRolesPage = () => {
     },
     {
       title: '操作',
-      width: 160,
+      width: 240,
       render: (_, role) =>
         role.builtIn === 1 ? (
-          <Typography.Text type="secondary">系统角色</Typography.Text>
+          <Button
+            type="link"
+            icon={<EyeOutlined />}
+            onClick={() => {
+              setEditing(undefined);
+              setAuthorizing(undefined);
+              setViewing(role);
+            }}
+          >
+            查看授权
+          </Button>
         ) : (
           <Space>
             {access.canUpdateAdminRole && (
-              <Button type="link" onClick={() => setEditing(role)}>
-                编辑权限
-              </Button>
+              <>
+                <Button
+                  type="link"
+                  icon={<EditOutlined />}
+                  onClick={() => {
+                    setAuthorizing(undefined);
+                    setViewing(undefined);
+                    setEditing(role);
+                  }}
+                >
+                  编辑
+                </Button>
+                <Button
+                  type="link"
+                  icon={<SafetyCertificateOutlined />}
+                  onClick={() => {
+                    setEditing(undefined);
+                    setViewing(undefined);
+                    setAuthorizing(role);
+                  }}
+                >
+                  授权
+                </Button>
+              </>
             )}
             {access.canDeleteAdminRole && (
               <Popconfirm
@@ -314,14 +356,31 @@ const AdminRolesPage = () => {
       />
 
       <Modal
-        title={editing?.id ? '编辑角色' : '新建角色'}
-        open={editing !== undefined}
-        onOk={() => void submit()}
-        onCancel={() => setEditing(undefined)}
+        title={
+          viewing
+            ? '查看角色授权'
+            : authorizing
+              ? `角色授权：${authorizing.roleName}`
+              : editing?.id
+                ? '编辑角色'
+                : '新建角色'
+        }
+        open={activeRole !== undefined}
+        onOk={canSaveRole ? () => void submit() : undefined}
+        onCancel={() => {
+          setEditing(undefined);
+          setAuthorizing(undefined);
+          setViewing(undefined);
+        }}
         confirmLoading={saving}
         width={760}
         forceRender
         destroyOnHidden
+        footer={
+          viewing ? (
+            <Button onClick={() => setViewing(undefined)}>关闭</Button>
+          ) : undefined
+        }
       >
         <Form form={form} layout="vertical">
           <Space align="start" size={16} style={{ display: 'flex' }}>
@@ -331,7 +390,7 @@ const AdminRolesPage = () => {
               rules={[{ required: true, max: 128 }]}
               style={{ flex: 1 }}
             >
-              <Input placeholder="例如：设备运维" />
+              <Input disabled={!editing} placeholder="例如：设备运维" />
             </Form.Item>
             <Form.Item
               name="roleCode"
@@ -346,13 +405,17 @@ const AdminRolesPage = () => {
               style={{ flex: 1 }}
             >
               <Input
-                disabled={Boolean(editing?.id)}
+                disabled={!editing || Boolean(editing?.id)}
                 placeholder="例如：iot:operator"
               />
             </Form.Item>
           </Space>
           <Form.Item name="description" label="角色说明">
-            <Input.TextArea rows={2} maxLength={512} />
+            <Input.TextArea
+              disabled={!editing}
+              rows={2}
+              maxLength={512}
+            />
           </Form.Item>
           <Form.Item
             name="status"
@@ -360,6 +423,7 @@ const AdminRolesPage = () => {
             rules={[{ required: true }]}
           >
             <Select
+              disabled={!editing}
               options={[
                 { value: 1, label: '启用' },
                 { value: 0, label: '停用' },
@@ -380,6 +444,7 @@ const AdminRolesPage = () => {
                 permissions={permissions}
                 value={checkedIds}
                 onChange={setCheckedIds}
+                disabled={Boolean(viewing)}
               />
             </div>
           </Form.Item>
