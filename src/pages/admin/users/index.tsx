@@ -24,8 +24,10 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   createAdminUser,
   getAdminUsers,
+  getAssignableAgents,
   getAssignableRoles,
   resetAdminPassword,
+  updateAdminUserAgent,
   updateAdminUserRoles,
   updateAdminUserStatus,
 } from '@/services/iot';
@@ -35,6 +37,8 @@ const AdminUsersPage = () => {
   const access = useAccess();
   const [rows, setRows] = useState<API.AdminUserResponse[]>([]);
   const [roles, setRoles] = useState<API.AdminUserRoleResponse[]>([]);
+  const [agents, setAgents] = useState<API.AdminAssignableAgentResponse[]>([]);
+  const [agentsLoading, setAgentsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [keyword, setKeyword] = useState('');
@@ -42,12 +46,21 @@ const AdminUsersPage = () => {
   const [total, setTotal] = useState(0);
   const [selectedKeys, setSelectedKeys] = useState<Key[]>([]);
   const [selectedRows, setSelectedRows] = useState<API.AdminUserResponse[]>([]);
+  const [agentUser, setAgentUser] = useState<API.AdminUserResponse>();
   const [userModal, setUserModal] = useState<
     { mode: 'create' } | { mode: 'roles'; user: API.AdminUserResponse } | null
   >(null);
   const [passwordUser, setPasswordUser] = useState<API.AdminUserResponse>();
   const [userForm] = Form.useForm();
+  const [agentForm] = Form.useForm();
   const [passwordForm] = Form.useForm();
+
+  const agentOptions = agents.map((agent) => ({
+    value: agent.id,
+    label: `${'　'.repeat(agent.depth || 0)}${agent.name}${
+      agent.agentCode ? `（${agent.agentCode}）` : ''
+    }`,
+  }));
 
   const loadData = useCallback(
     async (nextPage: number, nextKeyword: string) => {
@@ -101,6 +114,28 @@ const AdminUsersPage = () => {
   }, [keyword, loadData, page]);
 
   useEffect(() => {
+    let active = true;
+    setAgentsLoading(true);
+    getAssignableAgents()
+      .then((options) => {
+        if (active) setAgents(options);
+      })
+      .catch((error) => {
+        if (active) {
+          message.error(
+            error instanceof Error ? error.message : '代理列表加载失败',
+          );
+        }
+      })
+      .finally(() => {
+        if (active) setAgentsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!userModal) return;
     if (userModal.mode === 'create') {
       userForm.resetFields();
@@ -112,6 +147,11 @@ const AdminUsersPage = () => {
       });
     }
   }, [roles, userForm, userModal]);
+
+  useEffect(() => {
+    if (!agentUser) return;
+    agentForm.setFieldsValue({ agentId: agentUser.agentId });
+  }, [agentForm, agentUser]);
 
   useEffect(() => {
     if (!passwordUser) return;
@@ -135,6 +175,25 @@ const AdminUsersPage = () => {
       else await loadData(page, keyword);
     } catch (error) {
       message.error(error instanceof Error ? error.message : '保存失败');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const submitAgent = async () => {
+    const values = await agentForm.validateFields();
+    if (!agentUser) return;
+    setSaving(true);
+    try {
+      await updateAdminUserAgent(agentUser.id, values.agentId);
+      message.success('所属代理已更新');
+      setAgentUser(undefined);
+      agentForm.resetFields();
+      await loadData(page, keyword);
+    } catch (error) {
+      message.error(
+        error instanceof Error ? error.message : '所属代理更新失败',
+      );
     } finally {
       setSaving(false);
     }
@@ -223,9 +282,15 @@ const AdminUsersPage = () => {
     { title: '创建时间', dataIndex: 'createdAt', width: 190 },
     {
       title: '操作',
-      width: 190,
+      width: 280,
       render: (_, user) => (
         <Space>
+          {access.canUpdateAdminUser &&
+            !user.roles.some((role) => role.roleCode === 'super_admin') && (
+              <Button type="link" onClick={() => setAgentUser(user)}>
+                调整所属代理
+              </Button>
+            )}
           {access.canAssignAdminUserRoles &&
             !user.roles.some((role) => role.roleCode === 'super_admin') && (
               <Button
@@ -351,6 +416,19 @@ const AdminUsersPage = () => {
               >
                 <Input.Password autoComplete="new-password" />
               </Form.Item>
+              <Form.Item
+                name="agentId"
+                label="所属代理"
+                rules={[{ required: true, message: '请选择所属代理' }]}
+              >
+                <Select
+                  loading={agentsLoading}
+                  options={agentOptions}
+                  placeholder="选择所属代理"
+                  showSearch={{ optionFilterProp: 'label' }}
+                  notFoundContent={agentsLoading ? '加载中...' : '暂无可选代理'}
+                />
+              </Form.Item>
             </>
           )}
           <Form.Item
@@ -365,6 +443,35 @@ const AdminUsersPage = () => {
                 label: role.roleName,
               }))}
               placeholder="选择一个或多个角色"
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title={`调整所属代理：${agentUser?.username || ''}`}
+        open={agentUser !== undefined}
+        onOk={() => void submitAgent()}
+        onCancel={() => {
+          setAgentUser(undefined);
+          agentForm.resetFields();
+        }}
+        confirmLoading={saving}
+        forceRender
+        destroyOnHidden
+      >
+        <Form form={agentForm} layout="vertical">
+          <Form.Item
+            name="agentId"
+            label="所属代理"
+            rules={[{ required: true, message: '请选择所属代理' }]}
+          >
+            <Select
+              loading={agentsLoading}
+              options={agentOptions}
+              placeholder="选择所属代理"
+              showSearch={{ optionFilterProp: 'label' }}
+              notFoundContent={agentsLoading ? '加载中...' : '暂无可选代理'}
             />
           </Form.Item>
         </Form>

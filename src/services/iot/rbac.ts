@@ -23,15 +23,34 @@ export async function getAssignableRoles() {
   return unwrap(response);
 }
 
+export async function getAssignableAgents() {
+  const response = await request<
+    API.ApiResponse<API.AdminAssignableAgentResponse[]>
+  >('/admin/rbac/user-agents', { method: 'GET' });
+  return unwrap(response);
+}
+
 export async function createAdminUser(data: {
   username: string;
   password: string;
   roleIds: number[];
+  agentId: API.AgentId;
 }) {
   const response = await request<API.ApiResponse<void>>('/admin/rbac/users', {
     method: 'POST',
     data,
   });
+  return unwrap(response);
+}
+
+export async function updateAdminUserAgent(id: number, agentId: API.AgentId) {
+  const response = await request<API.ApiResponse<void>>(
+    `/admin/rbac/users/${id}/agent`,
+    {
+      method: 'PUT',
+      data: { agentId },
+    },
+  );
   return unwrap(response);
 }
 

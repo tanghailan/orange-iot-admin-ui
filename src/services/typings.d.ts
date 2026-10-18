@@ -83,6 +83,14 @@ declare namespace API {
     roleName: string;
   };
 
+  type AdminAssignableAgentResponse = {
+    id: AgentId;
+    agentCode?: string;
+    name: string;
+    parentId?: AgentId | null;
+    depth: number;
+  };
+
   type AdminUserResponse = {
     id: number;
     username: string;
@@ -92,6 +100,21 @@ declare namespace API {
     agentId?: AgentId | null;
     agentCode?: string;
     agentName?: string;
+  };
+
+  type AgentAuditLogRecord = {
+    id: number;
+    operatorUserId: number;
+    operatorUsername?: string;
+    agentId?: AgentId | null;
+    agentCode?: string;
+    agentName?: string;
+    operationType: string;
+    targetType: string;
+    targetId?: string;
+    beforeJson?: string;
+    afterJson?: string;
+    createdAt: string;
   };
 
   // ==================== 产品相关 ====================

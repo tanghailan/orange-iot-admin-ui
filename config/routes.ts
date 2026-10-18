@@ -118,6 +118,12 @@ export default [
         access: 'canViewAdminUsers',
       },
       {
+        name: 'agentAudits',
+        path: '/admin/agent-audits',
+        component: './iot/agent-audits',
+        access: 'canViewAgentAudits',
+      },
+      {
         name: 'roles',
         path: '/admin/roles',
         component: './admin/roles',

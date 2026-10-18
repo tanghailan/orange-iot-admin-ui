@@ -40,6 +40,7 @@ export default function access(
     canUpdateAgent: has('iot:agent:update'),
     canDisableAgent: has('iot:agent:disable'),
     canGrantAgentProducts: has('iot:agent:product:grant'),
+    canViewAgentAudits: canOpen('iot:agent:audit:list', '/admin/agent-audits'),
     canListDevices: has('iot:device:list'),
     canViewMessages:
       canOpen('iot:message:list', '/operations/messages') &&
@@ -60,7 +61,8 @@ export default function access(
     canUpdateSystemConfig: has('iot:config:update'),
     canDeleteSystemConfig: has('iot:config:delete'),
     canViewAdminUsers: canOpen('system:user:list', '/admin/users'),
-    canCreateAdminUser: has('system:user:create'),
+    canCreateAdminUser:
+      has('system:user:create') && has('system:user:assign-roles'),
     canUpdateAdminUser: has('system:user:update'),
     canAssignAdminUserRoles: has('system:user:assign-roles'),
     canResetAdminPassword: has('system:user:reset-password'),
