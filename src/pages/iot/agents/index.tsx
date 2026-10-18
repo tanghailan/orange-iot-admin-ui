@@ -3,6 +3,7 @@ import {
   FolderAddOutlined,
   PlusOutlined,
   ReloadOutlined,
+  RightOutlined,
   SafetyCertificateOutlined,
   StopOutlined,
   SwapOutlined,
@@ -26,6 +27,7 @@ import {
   Tag,
   Tree,
   Typography,
+  theme,
 } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -186,6 +188,7 @@ const ensureSuccess = <T,>(response: API.ApiResponse<T>, fallback: string) => {
 
 const AgentManagement: React.FC = () => {
   const access = useAccess();
+  const { token } = theme.useToken();
   const [agents, setAgents] = useState<AgentRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -438,6 +441,7 @@ const AgentManagement: React.FC = () => {
     {
       title: '代理名称',
       dataIndex: 'name',
+      width: 170,
       render: (_, record) => (
         <Button
           type="link"
@@ -448,29 +452,29 @@ const AgentManagement: React.FC = () => {
         </Button>
       ),
     },
-    { title: '代理编码', dataIndex: 'agentCode', width: 180 },
+    { title: '代理编码', dataIndex: 'agentCode', width: 150 },
     {
       title: '级别',
       dataIndex: 'level',
-      width: 90,
+      width: 72,
       render: (_, record) => `L${record.level}`,
     },
     {
       title: '状态',
       dataIndex: 'status',
-      width: 90,
+      width: 80,
       render: (_, record) => (
         <Tag color={record.status === 1 ? 'green' : 'default'}>
           {record.status === 1 ? '启用' : '停用'}
         </Tag>
       ),
     },
-    { title: '账号数', dataIndex: 'accountCount', width: 90 },
-    { title: '设备数', dataIndex: 'deviceCount', width: 90 },
+    { title: '账号数', dataIndex: 'accountCount', width: 72 },
+    { title: '设备数', dataIndex: 'deviceCount', width: 72 },
     {
       title: '操作',
       valueType: 'option',
-      width: 300,
+      width: 260,
       className: 'iot-action-cell',
       render: (_, record) => [
         access.canUpdateAgent && !isDirectAgent(record) ? (
@@ -722,6 +726,45 @@ const AgentManagement: React.FC = () => {
                 pagination={false}
                 dataSource={selectedAgent.children}
                 columns={childColumns}
+                expandable={{
+                  expandIcon: ({ expanded, onExpand, record }) =>
+                    record.children.length ? (
+                      <Button
+                        type="text"
+                        size="small"
+                        shape="circle"
+                        aria-label={
+                          expanded
+                            ? `收起${record.name}的下级代理`
+                            : `展开${record.name}的下级代理`
+                        }
+                        icon={
+                          <RightOutlined
+                            rotate={expanded ? 90 : 0}
+                            style={{ fontSize: 11 }}
+                          />
+                        }
+                        onClick={(event) => onExpand(record, event)}
+                        style={{
+                          width: 24,
+                          height: 24,
+                          padding: 0,
+                          marginInlineEnd: 4,
+                          color: expanded
+                            ? token.colorPrimary
+                            : token.colorTextTertiary,
+                        }}
+                      />
+                    ) : (
+                      <span
+                        aria-hidden
+                        style={{
+                          display: 'inline-block',
+                          width: 28,
+                        }}
+                      />
+                    ),
+                }}
                 locale={{ emptyText: <Empty description="暂无下级代理" /> }}
               />
             </Card>
