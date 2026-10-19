@@ -1,12 +1,17 @@
 import {
+  DeleteOutlined,
   DownloadOutlined,
+  EditOutlined,
   PlusOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { useAccess } from '@umijs/max';
+import type { TreeDataNode } from 'antd';
 import {
   Button,
+  Checkbox,
+  Empty,
   Form,
   Input,
   Modal,
@@ -14,20 +19,22 @@ import {
   Popconfirm,
   Select,
   Space,
+  Spin,
   Switch,
-  Table,
   Tag,
+  Tree,
   Typography,
 } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import type { Key } from 'react';
+import type { Key, ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   deleteAdminPermission,
+  getAdminMenus,
   getAdminPermissions,
   saveAdminPermission,
 } from '@/services/iot';
 import { downloadCsv } from '@/utils/exportCsv';
+import { groupPermissionsByMenu } from '../shared';
 
 const typeLabel: Record<API.AdminPermissionResponse['permissionType'], string> =
   {
@@ -36,8 +43,16 @@ const typeLabel: Record<API.AdminPermissionResponse['permissionType'], string> =
     API: '接口',
   };
 
+const typeColor: Record<API.AdminPermissionResponse['permissionType'], string> =
+  {
+    MENU: 'blue',
+    ACTION: 'gold',
+    API: 'purple',
+  };
+
 const AdminPermissionsPage = () => {
   const access = useAccess();
+  const [menus, setMenus] = useState<API.AdminMenuResponse[]>([]);
   const [permissions, setPermissions] = useState<API.AdminPermissionResponse[]>(
     [],
   );
@@ -50,19 +65,18 @@ const AdminPermissionsPage = () => {
     useState<API.AdminPermissionResponse['permissionType']>();
   const [status, setStatus] = useState<number>();
   const [selectedKeys, setSelectedKeys] = useState<Key[]>([]);
-  const [selectedRows, setSelectedRows] = useState<
-    API.AdminPermissionResponse[]
-  >([]);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
   const [form] = Form.useForm();
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      setPermissions(await getAdminPermissions());
+      const [permissionList, menuList] = await Promise.all([
+        getAdminPermissions(),
+        getAdminMenus(),
+      ]);
+      setPermissions(permissionList);
+      setMenus(menuList);
       setSelectedKeys([]);
-      setSelectedRows([]);
     } catch (error) {
       message.error(
         error instanceof Error ? error.message : '权限清单加载失败',
@@ -91,14 +105,8 @@ const AdminPermissionsPage = () => {
     });
   }, [keyword, module, permissionType, permissions, status]);
 
-  const visibleRows = filteredPermissions.slice(
-    (page - 1) * pageSize,
-    page * pageSize,
-  );
-
   const clearSelection = () => {
     setSelectedKeys([]);
-    setSelectedRows([]);
   };
 
   const resetFilters = () => {
@@ -106,7 +114,6 @@ const AdminPermissionsPage = () => {
     setModule(undefined);
     setPermissionType(undefined);
     setStatus(undefined);
-    setPage(1);
     clearSelection();
   };
 
@@ -132,6 +139,25 @@ const AdminPermissionsPage = () => {
       items,
     );
   };
+
+  const selectedRows = useMemo(() => {
+    const selectedIds = new Set(
+      selectedKeys
+        .map((key) => String(key))
+        .filter((key) => key.startsWith('permission:'))
+        .map((key) => Number(key.slice('permission:'.length))),
+    );
+    return permissions.filter((permission) => selectedIds.has(permission.id));
+  }, [permissions, selectedKeys]);
+
+  const togglePermissionSelection = useCallback((permissionId: number) => {
+    const key = `permission:${permissionId}`;
+    setSelectedKeys((current) =>
+      current.includes(key)
+        ? current.filter((item) => item !== key)
+        : [...current, key],
+    );
+  }, []);
 
   useEffect(() => {
     void loadData();
@@ -160,76 +186,168 @@ const AdminPermissionsPage = () => {
     }
   };
 
-  const columns: ColumnsType<API.AdminPermissionResponse> = [
-    {
-      title: '模块',
-      dataIndex: 'module',
-      width: 130,
-      render: (module) => <Tag>{module}</Tag>,
-    },
-    {
-      title: '权限名称',
-      dataIndex: 'permissionName',
-      width: 180,
-      render: (name, permission) => (
-        <Space>
-          <Typography.Text strong>{name}</Typography.Text>
-          <Tag
-            color={permission.permissionType === 'MENU' ? 'blue' : 'default'}
-          >
-            {typeLabel[permission.permissionType]}
-          </Tag>
-        </Space>
+  const handleDelete = async (permission: API.AdminPermissionResponse) => {
+    try {
+      await deleteAdminPermission(permission.id);
+      message.success('权限项已删除');
+      await loadData();
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : '权限项删除失败');
+    }
+  };
+
+  const treeData = useMemo<TreeDataNode[]>(() => {
+    const { menuTree, permissionsByPage, unassignedByModule } =
+      groupPermissionsByMenu(menus, filteredPermissions);
+
+    const permissionNode = (
+      permission: API.AdminPermissionResponse,
+    ): TreeDataNode => ({
+      key: `permission:${permission.id}`,
+      className: 'iot-permission-tree-leaf',
+      isLeaf: true,
+      title: (
+        <div className="iot-permission-tree-item">
+          <div className="iot-permission-tree-main">
+            <Checkbox
+              checked={selectedKeys.includes(`permission:${permission.id}`)}
+              onClick={(event) => event.stopPropagation()}
+              onChange={() => togglePermissionSelection(permission.id)}
+            />
+            <Space size={8}>
+              <Typography.Text strong>
+                {permission.permissionName}
+              </Typography.Text>
+              <Tag color={typeColor[permission.permissionType]}>
+                {typeLabel[permission.permissionType]}
+              </Tag>
+              <Tag color={permission.status === 1 ? 'green' : 'default'}>
+                {permission.status === 1 ? '启用' : '停用'}
+              </Tag>
+            </Space>
+            <Typography.Text code>{permission.permissionCode}</Typography.Text>
+          </div>
+          <div className="iot-permission-tree-meta">
+            <Typography.Text type="secondary">
+              {permission.description || '暂无说明'}
+            </Typography.Text>
+            <Space size={4} onClick={(event) => event.stopPropagation()}>
+              {access.canUpdateAdminPermission && (
+                <Button
+                  type="link"
+                  size="small"
+                  icon={<EditOutlined />}
+                  onClick={() => setEditing(permission)}
+                >
+                  编辑
+                </Button>
+              )}
+              {access.canDeleteAdminPermission && (
+                <Popconfirm
+                  title="删除这个权限项？"
+                  description="菜单或角色仍在使用的权限项不能删除。"
+                  onConfirm={() => void handleDelete(permission)}
+                >
+                  <Button
+                    type="link"
+                    danger
+                    size="small"
+                    icon={<DeleteOutlined />}
+                  >
+                    删除
+                  </Button>
+                </Popconfirm>
+              )}
+            </Space>
+          </div>
+        </div>
       ),
-    },
-    { title: '权限编码', dataIndex: 'permissionCode', width: 250 },
-    { title: '说明', dataIndex: 'description', ellipsis: true },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      width: 100,
-      render: (status) => (
-        <Tag color={status === 1 ? 'green' : 'default'}>
-          {status === 1 ? '启用' : '停用'}
-        </Tag>
-      ),
-    },
-    {
-      title: '操作',
-      width: 180,
-      className: 'iot-action-cell',
-      render: (_, permission) => (
-        <Space className="iot-table-actions" size={4}>
-          {access.canUpdateAdminPermission && (
-            <Button type="link" onClick={() => setEditing(permission)}>
-              编辑
-            </Button>
-          )}
-          {access.canDeleteAdminPermission && (
-            <Popconfirm
-              title="删除这个权限项？"
-              description="菜单或角色仍在使用的权限项不能删除。"
-              onConfirm={async () => {
-                try {
-                  await deleteAdminPermission(permission.id);
-                  message.success('权限项已删除');
-                  await loadData();
-                } catch (error) {
-                  message.error(
-                    error instanceof Error ? error.message : '权限项删除失败',
-                  );
-                }
-              }}
-            >
-              <Button type="link" danger>
-                删除
-              </Button>
-            </Popconfirm>
-          )}
-        </Space>
-      ),
-    },
-  ];
+    });
+
+    const renderGroupTitle = (content: ReactNode) => (
+      <div className="iot-permission-tree-group">{content}</div>
+    );
+
+    const buildNodes = (items: API.AdminMenuResponse[]): TreeDataNode[] =>
+      items.flatMap((item) => {
+        if (item.menuType === 'PAGE') {
+          const pagePermissions = permissionsByPage.get(item.menuCode) || [];
+          if (!pagePermissions.length) return [];
+          return [
+            {
+              key: `page:${item.menuCode}`,
+              className: 'iot-permission-tree-group-node',
+              title: renderGroupTitle(
+                <>
+                  <Typography.Text strong>{item.menuName}</Typography.Text>
+                  <Tag color="blue">页面</Tag>
+                  <Typography.Text type="secondary">
+                    {pagePermissions.length} 项权限
+                  </Typography.Text>
+                </>,
+              ),
+              children: pagePermissions.map(permissionNode),
+            },
+          ];
+        }
+
+        const children = buildNodes(item.children);
+        if (!children.length) return [];
+        return [
+          {
+            key: `menu:${item.menuCode}`,
+            className: 'iot-permission-tree-group-node',
+            title: renderGroupTitle(
+              <>
+                <Typography.Text strong>{item.menuName}</Typography.Text>
+                <Tag>{children.length} 个页面</Tag>
+              </>,
+            ),
+            children,
+          },
+        ];
+      });
+
+    const nodes = buildNodes(menuTree);
+    if (unassignedByModule.size > 0) {
+      nodes.push({
+        key: 'unassigned',
+        className: 'iot-permission-tree-group-node',
+        title: renderGroupTitle(
+          <>
+            <Typography.Text strong>未关联菜单</Typography.Text>
+            <Tag color="orange">{unassignedByModule.size} 个模块</Tag>
+          </>,
+        ),
+        children: Array.from(unassignedByModule.entries()).map(
+          ([moduleName, modulePermissions]) => ({
+            key: `unassigned-module:${moduleName}`,
+            className: 'iot-permission-tree-group-node',
+            title: renderGroupTitle(
+              <>
+                <Typography.Text strong>
+                  {moduleName || '未分组'}
+                </Typography.Text>
+                <Typography.Text type="secondary">
+                  {modulePermissions.length} 项权限
+                </Typography.Text>
+              </>,
+            ),
+            children: modulePermissions.map(permissionNode),
+          }),
+        ),
+      });
+    }
+    return nodes;
+  }, [
+    access.canDeleteAdminPermission,
+    access.canUpdateAdminPermission,
+    filteredPermissions,
+    handleDelete,
+    menus,
+    selectedKeys,
+    togglePermissionSelection,
+  ]);
 
   return (
     <PageContainer
@@ -246,10 +364,10 @@ const AdminPermissionsPage = () => {
         <Button
           key="export-page"
           icon={<DownloadOutlined />}
-          disabled={!visibleRows.length}
-          onClick={() => exportRows(visibleRows, '当前页')}
+          disabled={!filteredPermissions.length}
+          onClick={() => exportRows(filteredPermissions, '筛选结果')}
         >
-          导出当前页
+          导出筛选结果
         </Button>,
         <Button
           key="export-selected"
@@ -289,12 +407,10 @@ const AdminPermissionsPage = () => {
           style={{ width: 320 }}
           onChange={(event) => {
             setKeyword(event.target.value);
-            setPage(1);
             clearSelection();
           }}
           onSearch={(value) => {
             setKeyword(value);
-            setPage(1);
             clearSelection();
           }}
         />
@@ -312,7 +428,6 @@ const AdminPermissionsPage = () => {
             .map((value) => ({ value, label: value }))}
           onChange={(value?: string) => {
             setModule(value);
-            setPage(1);
             clearSelection();
           }}
         />
@@ -327,7 +442,6 @@ const AdminPermissionsPage = () => {
           }))}
           onChange={(value?: API.AdminPermissionResponse['permissionType']) => {
             setPermissionType(value);
-            setPage(1);
             clearSelection();
           }}
         />
@@ -342,37 +456,37 @@ const AdminPermissionsPage = () => {
           ]}
           onChange={(value?: number) => {
             setStatus(value);
-            setPage(1);
             clearSelection();
           }}
         />
         <Button onClick={resetFilters}>重置</Button>
       </Space>
-      <Table
-        rowKey="id"
-        loading={loading}
-        className="iot-admin-table"
-        tableLayout="fixed"
-        columns={columns}
-        dataSource={visibleRows}
-        rowSelection={{
-          selectedRowKeys: selectedKeys,
-          onChange: (keys, selected) => {
-            setSelectedKeys(keys);
-            setSelectedRows(selected);
-          },
-        }}
-        pagination={{
-          current: page,
-          pageSize,
-          total: filteredPermissions.length,
-          showSizeChanger: true,
-          onChange: (nextPage, nextSize) => {
-            setPage(nextPage);
-            setPageSize(nextSize);
-          },
-        }}
-      />
+      <div className="iot-permission-tree-panel">
+        <div className="iot-permission-tree-header">
+          <Space size={12}>
+            <Typography.Text strong>权限树</Typography.Text>
+            <Typography.Text type="secondary">
+              共 {filteredPermissions.length} 项权限，按菜单页面归类
+            </Typography.Text>
+          </Space>
+          <Typography.Text type="secondary">
+            勾选权限后可批量导出
+          </Typography.Text>
+        </div>
+        <Spin spinning={loading}>
+          {treeData.length ? (
+            <Tree
+              blockNode
+              className="iot-tree-compact iot-permission-tree"
+              defaultExpandAll
+              selectable={false}
+              treeData={treeData}
+            />
+          ) : (
+            <Empty description="没有符合条件的权限" />
+          )}
+        </Spin>
+      </div>
 
       <Modal
         title={editing?.id ? '编辑权限项' : '新建权限项'}

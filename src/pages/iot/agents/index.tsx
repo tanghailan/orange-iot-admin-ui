@@ -140,6 +140,7 @@ const isDirectAgent = (agent: AgentRow) =>
 const toTreeData = (agents: AgentRow[]): TreeDataNode[] =>
   agents.map((agent) => ({
     key: String(agent.id),
+    className: 'iot-agent-tree-node',
     title: (
       <Space size={6}>
         <Typography.Text ellipsis>{agent.name}</Typography.Text>
@@ -582,7 +583,7 @@ const AgentManagement: React.FC = () => {
             <Empty description="正在加载代理树" />
           ) : agents.length ? (
             <Tree
-              blockNode
+              className="iot-tree-compact iot-agent-tree"
               defaultExpandAll
               selectedKeys={selectedAgentId ? [selectedAgentId] : []}
               treeData={treeData}

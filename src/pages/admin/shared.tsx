@@ -9,30 +9,18 @@ type PermissionPickerProps = {
   disabled?: boolean;
 };
 
-export function PermissionPicker({
-  menus,
-  permissions,
-  value,
-  onChange,
-  disabled = false,
-}: PermissionPickerProps) {
-  const menuTree = buildMenuTree(menus.filter((menu) => menu.status === 1));
-  const directories = menuTree.filter((menu) => menu.menuType === 'DIRECTORY');
-  const pages = menuTree.flatMap((menu) =>
-    menu.menuType === 'DIRECTORY'
-      ? menu.children.filter((child) => child.menuType === 'PAGE')
-      : menu.menuType === 'PAGE'
-        ? [menu]
-        : [],
-  );
-  const permissionsByPage = new Map<
-    string,
-    API.AdminPermissionResponse[]
-  >();
+export function groupPermissionsByMenu(
+  menus: API.AdminMenuResponse[],
+  permissions: API.AdminPermissionResponse[],
+) {
+  const menuTree = buildMenuTree(menus);
+  const pages = collectMenuPages(menuTree);
+  const permissionsByPage = new Map<string, API.AdminPermissionResponse[]>();
   const unassignedByDirectory = new Map<
     string,
     API.AdminPermissionResponse[]
   >();
+  const unassignedByModule = new Map<string, API.AdminPermissionResponse[]>();
 
   permissions.forEach((permission) => {
     const matchingPages = pages
@@ -57,10 +45,9 @@ export function PermissionPicker({
       })
       .filter(({ score }) => score > 0)
       .sort((left, right) => right.score - left.score);
-    const page =
-      permission.permissionCode.startsWith('iot:command:')
-        ? pages.find((item) => item.menuCode === 'messages')
-        : matchingPages[0]?.page;
+    const page = permission.permissionCode.startsWith('iot:command:')
+      ? pages.find((item) => item.menuCode === 'messages')
+      : matchingPages[0]?.page;
 
     if (page) {
       const items = permissionsByPage.get(page.menuCode) || [];
@@ -78,7 +65,32 @@ export function PermissionPicker({
     const items = unassignedByDirectory.get(directoryCode) || [];
     items.push(permission);
     unassignedByDirectory.set(directoryCode, items);
+    const moduleItems = unassignedByModule.get(permission.module) || [];
+    moduleItems.push(permission);
+    unassignedByModule.set(permission.module, moduleItems);
   });
+
+  return {
+    menuTree,
+    permissionsByPage,
+    unassignedByDirectory,
+    unassignedByModule,
+  };
+}
+
+export function PermissionPicker({
+  menus,
+  permissions,
+  value,
+  onChange,
+  disabled = false,
+}: PermissionPickerProps) {
+  const { menuTree, permissionsByPage, unassignedByDirectory } =
+    groupPermissionsByMenu(
+      menus.filter((menu) => menu.status === 1),
+      permissions,
+    );
+  const directories = menuTree.filter((menu) => menu.menuType === 'DIRECTORY');
 
   const treeData: TreeDataNode[] = directories.map((directory) => ({
     key: `menu:${directory.menuCode}`,
@@ -98,7 +110,7 @@ export function PermissionPicker({
             })),
           };
         }),
-      ...(unassignedByDirectory.get(directory.menuCode) || []).length
+      ...((unassignedByDirectory.get(directory.menuCode) || []).length
         ? [
             {
               key: `unassigned:${directory.menuCode}`,
@@ -111,7 +123,7 @@ export function PermissionPicker({
               })),
             },
           ]
-        : [],
+        : []),
     ],
   }));
 
@@ -132,6 +144,14 @@ export function PermissionPicker({
         );
       }}
     />
+  );
+}
+
+function collectMenuPages(
+  menus: API.AdminMenuResponse[],
+): API.AdminMenuResponse[] {
+  return menus.flatMap((menu) =>
+    menu.menuType === 'PAGE' ? [menu] : collectMenuPages(menu.children),
   );
 }
 
