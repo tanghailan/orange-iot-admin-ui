@@ -27,7 +27,7 @@ export default {
   'menu.roles': 'Roles',
   'menu.menus': 'Menus',
   'menu.permissions': 'Permissions',
-  'menu.audits': 'Unified Audit',
+  'menu.audits': 'Audit',
   'menu.exception.403': '403',
   'menu.exception.404': '404',
   'menu.exception.500': '500',

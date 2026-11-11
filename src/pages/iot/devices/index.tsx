@@ -52,12 +52,22 @@ type DeviceRow = {
   status: number;
   online?: boolean;
   firmwareVersion?: string;
+  reportedJson?: string;
   lastOnlineAt?: string;
   createdAt?: string;
   ownerAgentId?: API.AgentId | null;
   ownerAgentCode?: string;
   ownerAgentName?: string;
 };
+
+function formatReportedJson(value?: string) {
+  if (!value) return '-';
+  try {
+    return JSON.stringify(JSON.parse(value), null, 2);
+  } catch {
+    return value;
+  }
+}
 
 type ProductOption = {
   id: number;
@@ -697,6 +707,23 @@ const DeviceManagement: React.FC = () => {
             </Descriptions.Item>
             <Descriptions.Item label="固件版本">
               {deviceDetailQuery.data.firmwareVersion || '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label="最新属性">
+              <Typography.Paragraph
+                style={{
+                  marginBottom: 0,
+                  whiteSpace: 'pre-wrap',
+                  maxHeight: 240,
+                  overflow: 'auto',
+                }}
+                copyable={
+                  deviceDetailQuery.data.reportedJson
+                    ? { text: deviceDetailQuery.data.reportedJson }
+                    : false
+                }
+              >
+                {formatReportedJson(deviceDetailQuery.data.reportedJson)}
+              </Typography.Paragraph>
             </Descriptions.Item>
             <Descriptions.Item label="最后在线时间">
               {deviceDetailQuery.data.lastOnlineAt || '-'}

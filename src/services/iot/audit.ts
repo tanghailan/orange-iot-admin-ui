@@ -45,7 +45,7 @@ export async function pageAuditLogs(params: {
     },
   );
   if (response.code !== 0) {
-    throw new Error(response.message || '统一审计加载失败');
+    throw new Error(response.message || '审计加载失败');
   }
   return response.data;
 }

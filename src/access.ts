@@ -40,7 +40,6 @@ export default function access(
     canUpdateAgent: has('iot:agent:update'),
     canDisableAgent: has('iot:agent:disable'),
     canGrantAgentProducts: has('iot:agent:product:grant'),
-    canViewAgentAudits: canOpen('iot:agent:audit:list', '/admin/agent-audits'),
     canViewAdminAudits: canOpen('system:audit:list', '/admin/audits'),
     canListDevices: has('iot:device:list'),
     canViewMessages:

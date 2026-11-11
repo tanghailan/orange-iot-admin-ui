@@ -102,21 +102,6 @@ declare namespace API {
     agentName?: string;
   };
 
-  type AgentAuditLogRecord = {
-    id: number;
-    operatorUserId: number;
-    operatorUsername?: string;
-    agentId?: AgentId | null;
-    agentCode?: string;
-    agentName?: string;
-    operationType: string;
-    targetType: string;
-    targetId?: string;
-    beforeJson?: string;
-    afterJson?: string;
-    createdAt: string;
-  };
-
   // ==================== 产品相关 ====================
   type ProductCreateRequest = {
     name: string;
@@ -124,10 +109,46 @@ declare namespace API {
     productKey: string;
   };
 
+  type ProductCommandRequest = {
+    commandName: string;
+    cmd: number;
+    timeoutSeconds: number;
+    ackMode: 'none' | 'ack' | 'finish';
+    enabled?: number;
+  };
+
+  type ProductCommandResponse = {
+    id?: number;
+    commandName: string;
+    cmd: number;
+    timeoutSeconds: number;
+    ackMode: 'none' | 'ack' | 'finish';
+    enabled?: number;
+  };
+
+  type ProductPropertyRequest = {
+    propertyName: string;
+    valueType: 'string' | 'int' | 'bool' | 'json';
+    accessMode: 'reported' | 'desired';
+  };
+
+  type ProductPropertyResponse = {
+    id?: number;
+    propertyName: string;
+    valueType: 'string' | 'int' | 'bool' | 'json';
+    accessMode: 'reported' | 'desired';
+  };
+
   type ProductUpdateRequest = {
     name?: string;
     description?: string;
     status?: number;
+    protocolVersion?: number;
+    allowUpgrade?: number;
+    allowReboot?: number;
+    allowPullLog?: number;
+    commands?: ProductCommandRequest[];
+    properties?: ProductPropertyRequest[];
   };
 
   type ProductResponse = {
@@ -136,7 +157,34 @@ declare namespace API {
     description?: string;
     productKey: string;
     status: number;
+    protocolVersion?: number;
+    allowUpgrade?: number;
+    allowReboot?: number;
+    allowPullLog?: number;
+    commands?: ProductCommandResponse[];
+    properties?: ProductPropertyResponse[];
     createdAt: string;
+  };
+
+  type PlatformClientCreateRequest = {
+    name: string;
+    agentId?: AgentId | null;
+    productKeys: string;
+    status?: number;
+  };
+
+  type PlatformClientResponse = {
+    id: number;
+    name: string;
+    agentId?: AgentId | null;
+    productKeys: string;
+    status: number;
+    createdAt?: string;
+    updatedAt?: string;
+  };
+
+  type PlatformClientCreatedResponse = PlatformClientResponse & {
+    token: string;
   };
 
   // ==================== 设备相关 ====================
@@ -180,6 +228,7 @@ declare namespace API {
     status: number;
     online: boolean;
     firmwareVersion?: string;
+    reportedJson?: string;
     lastOnlineAt?: string;
     createdAt: string;
     ownerAgentId?: AgentId | null;

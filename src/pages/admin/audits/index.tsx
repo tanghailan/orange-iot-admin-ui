@@ -93,9 +93,7 @@ const AdminAuditsPage = () => {
       setRows(result.list);
       setTotal(result.total);
     } catch (error) {
-      message.error(
-        error instanceof Error ? error.message : '统一审计加载失败',
-      );
+      message.error(error instanceof Error ? error.message : '审计加载失败');
     } finally {
       setLoading(false);
     }
@@ -182,7 +180,7 @@ const AdminAuditsPage = () => {
 
   return (
     <PageContainer
-      title="统一审计"
+      title="审计"
       subTitle="统一查看管理操作、跨服务调用和安全拒绝事件，支持按 requestId 关联检索"
       extra={
         <Button

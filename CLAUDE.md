@@ -1,130 +1,21 @@
-# CLAUDE.md
+# 管理端前端 Agent 开发规范
 
-## Project
+跨仓库的架构、接口归属和页面改动顺序见工作区根目录 [`../Agent开发手册.md`](../Agent开发手册.md)。
+工作区工作流入口是 [`../AGENTS.md`](../AGENTS.md)。档位和收尾只认工作区根目录 `.cursor/rules/agent-workflow.mdc`。
+本文件只保留 `orange-iot-admin-ui` 的工具约束。业务页面不要按 Ant Design Pro 模板的 mock 登录、`/api/currentUser` 或 `src/services/ant-design-pro/` 来写。
 
-Ant Design Pro — React enterprise boilerplate on Umi Max v4, antd v6, ProComponents v3.
+## 命令
 
-## Commands
+- Node.js 22 或更高，包管理用 npm 和 `package-lock.json`。
+- 联调使用 `npm run dev`。它关闭 mock，并把 `/api/v1/admin/` 代理到 Admin 服务，默认 `http://localhost:8811`。
+- 检查使用 `npm run lint`（Biome + `tsc`）。不要引入 ESLint 或 Prettier。
+- 写 antd 组件前先执行 `npx antd info <Component>`，按 antd 6 的属性来写。
+- `npm run simple` 会不可逆裁剪模板，没有明确要求不要执行。
+- `src/.umi` 是生成目录，异常时删除后重启。
 
-`npm start` (dev+mock), `npm run dev` (no mock), `npm run build` (utoopack), `npm run lint` (Biome+tsc), `npm run test` (Jest), `npx antd lint ./src` (antd-specific checks).
+## 代码位置
 
-Other: `npm run openapi` (regenerate `src/services/`), `npm run simple` (**irreversible** — commit first), `npm run biome` (auto-fix), `npm run tsc` (type-check only).
-
-## Critical Rules
-
-- **Never edit `src/services/ant-design-pro/`** — auto-generated, regenerate with `npm run openapi`
-- **Biome only** — no ESLint, no Prettier. Both `npm run lint` and `npx antd lint ./src` must pass before commit
-- **Always `npx antd info <Component>` before writing antd code** — don't guess APIs from memory
-- **`npm run simple` is irreversible** — always commit/branch first
-- **Conventional commits** required (commitlint enforced)
-- **TypeScript strict** · **Node ≥ 22** · **`package-lock.json`** (not yarn/pnpm)
-- **`.umi` dir is auto-generated** — delete `src/.umi` and restart if dev server acts up
-
-## Architecture Essentials
-
-**Config**: `config/config.ts` (defineConfig), `config/routes.ts` (declarative routes). Route `name` → `menu.xxx` i18n key; `access` field gates visibility.
-
-**Convention files** (`src/`): `app.tsx` (runtime config + `getInitialState`), `access.ts` (permissions), `global.tsx` (side effects), `loading.tsx`, `typings.d.ts`.
-
-**Auth**: `getInitialState()` → `GET /api/currentUser`; 401 → redirect login. `access.ts`: `canAdmin = currentUser.access === 'admin'`. Mock creds: `admin`/`ant.design` or `user`/`ant.design`.
-
-**State**: `useModel('filename')` for global hooks (`src/models/`). `useModel('@@initialState')` for currentUser/settings. ProTable `request` prop for most data loading. `@tanstack/react-query` for complex server state.
-
-**Styling priority**: Tailwind CSS v4 (layout) → antd-style v4 / `createStyles` (theme tokens) → CSS Modules → Less (legacy only).
-
-**Request**: built-in `request` from `@umijs/max`, configured in `src/requestErrorConfig.ts`. Per-page `service.ts` for non-generated APIs.
-
-**i18n**: 8 locales in `src/locales/`. `useIntl().formatMessage({ id, defaultMessage })`.
-
-**Mock**: `mock/` (global) + `src/pages/**/_mock.ts` (co-located). Express-style handlers.
-
-**Cloudflare Worker**: `cloudflare-worker/` — separate Hono app, own `package.json`, not an npm workspace.
-
-## AI Skills
-
-This project ships with two built-in Claude Code Skills (`.claude/skills/`). If you already have these skills in your project, no installation is needed — just run them directly. To update to the latest skill definitions, run `npx skills add ant-design/ant-design-pro`.
-
-### `/pro-upgrade` — Project Upgrade
-
-Run `/pro-upgrade` in Claude Code to auto-upgrade the project to the latest Ant Design Pro version. It diffs the latest template against this project and merges framework changes while preserving business code. Works for any version gap (v5→v6, v6.x→latest, etc.).
-
-### `/antd` — Ant Design CLI
-
-Run `/antd` in Claude Code for any antd-related work. It provides access to `@ant-design/cli` with offline metadata for antd v3/v4/v5/v6. Key commands:
-
-- `npx antd info <Component>` — look up props/API before writing code (mandatory)
-- `npx antd lint ./src` — check for deprecated or problematic usage (must pass before commit)
-- `npx antd demo <Component> <demo>` — get working code examples
-- `npx antd migrate <from> <to>` — migration checklist between major versions
-
-## Page Co-location
-
-Each page dir: `index.tsx`, optional `service.ts`, `_mock.ts`, `data.d.ts`, style files. Keep page-specific code with the page.
-
-# CLAUDE.md
-
-Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
-
-**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
-
-## 1. Think Before Coding
-
-**Don't assume. Don't hide confusion. Surface tradeoffs.**
-
-Before implementing:
-- State your assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them - don't pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
-- If something is unclear, stop. Name what's confusing. Ask.
-
-## 2. Simplicity First
-
-**Minimum code that solves the problem. Nothing speculative.**
-
-- No features beyond what was asked.
-- No abstractions for single-use code.
-- No "flexibility" or "configurability" that wasn't requested.
-- No error handling for impossible scenarios.
-- If you write 200 lines and it could be 50, rewrite it.
-
-Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
-
-## 3. Surgical Changes
-
-**Touch only what you must. Clean up only your own mess.**
-
-When editing existing code:
-- Don't "improve" adjacent code, comments, or formatting.
-- Don't refactor things that aren't broken.
-- Match existing style, even if you'd do it differently.
-- If you notice unrelated dead code, mention it - don't delete it.
-
-When your changes create orphans:
-- Remove imports/variables/functions that YOUR changes made unused.
-- Don't remove pre-existing dead code unless asked.
-
-The test: Every changed line should trace directly to the user's request.
-
-## 4. Goal-Driven Execution
-
-**Define success criteria. Loop until verified.**
-
-Transform tasks into verifiable goals:
-- "Add validation" → "Write tests for invalid inputs, then make them pass"
-- "Fix the bug" → "Write a test that reproduces it, then make it pass"
-- "Refactor X" → "Ensure tests pass before and after"
-
-For multi-step tasks, state a brief plan:
-```
-1. [Step] → verify: [check]
-2. [Step] → verify: [check]
-3. [Step] → verify: [check]
-```
-
-Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
-
----
-
-**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
-
----
+- 物联网接口手写在 `src/services/iot/`，类型在 `src/services/typings.d.ts`。
+- 不要修改 `src/services/ant-design-pro/`。
+- 侧栏来自后端菜单。新页面要同时改路由、`src/access.ts`、页面按钮权限和 Admin 的菜单种子，路径与权限码保持一致。
+- 成功响应是 `code === 0`。Token 键名是 `iot_admin_token`，放在 `Authorization` 头，不加 `Bearer`。

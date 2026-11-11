@@ -2,6 +2,7 @@ import {
   DeleteOutlined,
   DownloadOutlined,
   EditOutlined,
+  MinusCircleOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
 import type { ActionType, ProColumns } from '@ant-design/pro-components';
@@ -13,12 +14,16 @@ import {
   Empty,
   Form,
   Input,
+  InputNumber,
   Modal,
   message,
   Popconfirm,
+  Select,
+  Space,
+  Switch,
   Tag,
 } from 'antd';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import {
   createProduct,
   deleteProduct,
@@ -33,13 +38,39 @@ type ProductRow = {
   productKey: string;
   description?: string;
   status: number;
+  protocolVersion?: number;
+  allowUpgrade?: number;
+  allowReboot?: number;
+  allowPullLog?: number;
+  commands?: API.ProductCommandResponse[];
+  properties?: API.ProductPropertyResponse[];
   createdAt?: string;
+};
+
+type CommandFormValue = {
+  commandName: string;
+  cmd: number;
+  timeoutSeconds: number;
+  ackMode: 'none' | 'ack' | 'finish';
+  enabled?: boolean;
+};
+
+type PropertyFormValue = {
+  propertyName: string;
+  valueType: 'string' | 'int' | 'bool' | 'json';
+  accessMode: 'reported' | 'desired';
 };
 
 type ProductFormValues = {
   name: string;
   productKey?: string;
   description?: string;
+  protocolVersion?: number;
+  allowUpgrade?: boolean;
+  allowReboot?: boolean;
+  allowPullLog?: boolean;
+  commands?: CommandFormValue[];
+  properties?: PropertyFormValue[];
 };
 
 type SaveProductVariables =
@@ -81,6 +112,19 @@ const ProductManagement: React.FC = () => {
         { title: '产品 Key', value: (row) => row.productKey },
         { title: '描述', value: (row) => row.description },
         { title: '状态', value: (row) => (row.status === 1 ? '启用' : '禁用') },
+        { title: '协议版本', value: (row) => row.protocolVersion ?? 1 },
+        {
+          title: '允许升级',
+          value: (row) => (row.allowUpgrade === 0 ? '关' : '开'),
+        },
+        {
+          title: '允许重启',
+          value: (row) => (row.allowReboot === 0 ? '关' : '开'),
+        },
+        {
+          title: '允许拉日志',
+          value: (row) => (row.allowPullLog === 0 ? '关' : '开'),
+        },
         { title: '创建时间', value: (row) => row.createdAt },
       ],
       rows,
@@ -100,14 +144,27 @@ const ProductManagement: React.FC = () => {
   const saveMutation = useMutation<void, Error, SaveProductVariables>({
     mutationFn: async (variables) => {
       if (variables.mode === 'update') {
-        const body = {
+        const body: API.ProductUpdateRequest = {
           name: variables.values.name.trim(),
           description: variables.values.description?.trim() || undefined,
+          protocolVersion: variables.values.protocolVersion,
+          allowUpgrade: variables.values.allowUpgrade ? 1 : 0,
+          allowReboot: variables.values.allowReboot ? 1 : 0,
+          allowPullLog: variables.values.allowPullLog ? 1 : 0,
+          commands: (variables.values.commands || []).map((command) => ({
+            commandName: command.commandName.trim(),
+            cmd: command.cmd,
+            timeoutSeconds: command.timeoutSeconds,
+            ackMode: command.ackMode,
+            enabled: command.enabled ? 1 : 0,
+          })),
+          properties: (variables.values.properties || []).map((property) => ({
+            propertyName: property.propertyName.trim(),
+            valueType: property.valueType,
+            accessMode: property.accessMode,
+          })),
         };
-        const response = await updateProduct(
-          variables.id,
-          body as unknown as API.ProductUpdateRequest,
-        );
+        const response = await updateProduct(variables.id, body);
         if (response.code !== 0) {
           throw new Error(response.message || '更新产品失败');
         }
@@ -182,6 +239,34 @@ const ProductManagement: React.FC = () => {
       ),
     },
     {
+      title: '协议版本',
+      dataIndex: 'protocolVersion',
+      width: 100,
+      search: false,
+      render: (_, record) => record.protocolVersion ?? 1,
+    },
+    {
+      title: '升级',
+      dataIndex: 'allowUpgrade',
+      width: 80,
+      search: false,
+      render: (_, record) => (record.allowUpgrade === 0 ? '关' : '开'),
+    },
+    {
+      title: '重启',
+      dataIndex: 'allowReboot',
+      width: 80,
+      search: false,
+      render: (_, record) => (record.allowReboot === 0 ? '关' : '开'),
+    },
+    {
+      title: '拉日志',
+      dataIndex: 'allowPullLog',
+      width: 90,
+      search: false,
+      render: (_, record) => (record.allowPullLog === 0 ? '关' : '开'),
+    },
+    {
       title: '创建时间',
       dataIndex: 'createdAt',
       width: 180,
@@ -244,14 +329,36 @@ const ProductManagement: React.FC = () => {
   }
 
   function handleEdit(record: ProductRow) {
-    setEditingProduct(record);
     form.resetFields();
-    form.setFieldsValue({
-      name: record.name,
-      description: record.description || '',
-    });
+    setEditingProduct(record);
     setIsModalVisible(true);
   }
+
+  useLayoutEffect(() => {
+    if (!isModalVisible || !editingProduct) {
+      return;
+    }
+    form.setFieldsValue({
+      name: editingProduct.name,
+      description: editingProduct.description || '',
+      protocolVersion: editingProduct.protocolVersion ?? 1,
+      allowUpgrade: editingProduct.allowUpgrade !== 0,
+      allowReboot: editingProduct.allowReboot !== 0,
+      allowPullLog: editingProduct.allowPullLog !== 0,
+      commands: (editingProduct.commands || []).map((command) => ({
+        commandName: command.commandName,
+        cmd: command.cmd,
+        timeoutSeconds: command.timeoutSeconds,
+        ackMode: command.ackMode,
+        enabled: command.enabled !== 0,
+      })),
+      properties: (editingProduct.properties || []).map((property) => ({
+        propertyName: property.propertyName,
+        valueType: property.valueType,
+        accessMode: property.accessMode,
+      })),
+    });
+  }, [editingProduct, form, isModalVisible]);
 
   function handleModalCancel() {
     if (saveMutation.isPending) return;
@@ -351,7 +458,7 @@ const ProductManagement: React.FC = () => {
             setSelectedRows(rows);
           },
         }}
-        scroll={{ x: 1050 }}
+        scroll={{ x: 1480 }}
         locale={{
           emptyText: loadError ? (
             <Empty description={loadError} image={Empty.PRESENTED_IMAGE_SIMPLE}>
@@ -375,7 +482,11 @@ const ProductManagement: React.FC = () => {
         cancelButtonProps={{ disabled: saveMutation.isPending }}
         closable={!saveMutation.isPending}
         mask={{ closable: !saveMutation.isPending }}
-        width="min(600px, calc(100vw - 32px))"
+        width={
+          editingProduct
+            ? 'min(980px, calc(100vw - 32px))'
+            : 'min(600px, calc(100vw - 32px))'
+        }
         forceRender
         destroyOnHidden
       >
@@ -412,6 +523,219 @@ const ProductManagement: React.FC = () => {
           <Form.Item label="描述" name="description">
             <Input.TextArea rows={4} placeholder="请输入产品描述（可选）" />
           </Form.Item>
+          {editingProduct ? (
+            <>
+              <Form.Item
+                label="协议版本"
+                name="protocolVersion"
+                rules={[{ required: true, message: '请输入协议版本' }]}
+              >
+                <InputNumber min={1} precision={0} style={{ width: '100%' }} />
+              </Form.Item>
+              <Space size="large" wrap>
+                <Form.Item
+                  label="允许升级"
+                  name="allowUpgrade"
+                  valuePropName="checked"
+                >
+                  <Switch />
+                </Form.Item>
+                <Form.Item
+                  label="允许重启"
+                  name="allowReboot"
+                  valuePropName="checked"
+                >
+                  <Switch />
+                </Form.Item>
+                <Form.Item
+                  label="允许拉日志"
+                  name="allowPullLog"
+                  valuePropName="checked"
+                >
+                  <Switch />
+                </Form.Item>
+              </Space>
+              <Form.Item label="业务命令" required={false}>
+                <Form.List name="commands">
+                  {(fields, { add, remove }) => (
+                    <>
+                      {fields.map((field) => (
+                        <Space
+                          key={field.key}
+                          align="start"
+                          wrap
+                          style={{ display: 'flex', marginBottom: 8 }}
+                        >
+                          <Form.Item
+                            name={[field.name, 'commandName']}
+                            rules={[
+                              {
+                                required: true,
+                                whitespace: true,
+                                message: '请输入命令名字',
+                              },
+                            ]}
+                          >
+                            <Input
+                              placeholder="命令名字"
+                              style={{ width: 140 }}
+                            />
+                          </Form.Item>
+                          <Form.Item
+                            name={[field.name, 'cmd']}
+                            rules={[
+                              { required: true, message: '请输入命令号' },
+                            ]}
+                          >
+                            <InputNumber
+                              min={16}
+                              max={255}
+                              precision={0}
+                              placeholder="cmd ≥ 16"
+                              style={{ width: 120 }}
+                            />
+                          </Form.Item>
+                          <Form.Item
+                            name={[field.name, 'timeoutSeconds']}
+                            rules={[{ required: true, message: '请输入超时' }]}
+                          >
+                            <InputNumber
+                              min={1}
+                              precision={0}
+                              placeholder="超时秒"
+                              style={{ width: 110 }}
+                            />
+                          </Form.Item>
+                          <Form.Item
+                            name={[field.name, 'ackMode']}
+                            rules={[{ required: true, message: '请选择回执' }]}
+                          >
+                            <Select
+                              placeholder="回执"
+                              style={{ width: 110 }}
+                              options={[
+                                { value: 'none', label: 'none' },
+                                { value: 'ack', label: 'ack' },
+                                { value: 'finish', label: 'finish' },
+                              ]}
+                            />
+                          </Form.Item>
+                          <Form.Item
+                            name={[field.name, 'enabled']}
+                            valuePropName="checked"
+                          >
+                            <Switch
+                              checkedChildren="启用"
+                              unCheckedChildren="停用"
+                            />
+                          </Form.Item>
+                          <Button
+                            type="text"
+                            danger
+                            icon={<MinusCircleOutlined />}
+                            onClick={() => remove(field.name)}
+                          />
+                        </Space>
+                      ))}
+                      <Button
+                        type="dashed"
+                        onClick={() =>
+                          add({
+                            cmd: 16,
+                            timeoutSeconds: 30,
+                            ackMode: 'ack',
+                            enabled: true,
+                          })
+                        }
+                        icon={<PlusOutlined />}
+                      >
+                        添加命令
+                      </Button>
+                    </>
+                  )}
+                </Form.List>
+              </Form.Item>
+              <Form.Item label="属性">
+                <Form.List name="properties">
+                  {(fields, { add, remove }) => (
+                    <>
+                      {fields.map((field) => (
+                        <Space
+                          key={field.key}
+                          align="start"
+                          wrap
+                          style={{ display: 'flex', marginBottom: 8 }}
+                        >
+                          <Form.Item
+                            name={[field.name, 'propertyName']}
+                            rules={[
+                              {
+                                required: true,
+                                whitespace: true,
+                                message: '请输入属性名字',
+                              },
+                            ]}
+                          >
+                            <Input
+                              placeholder="属性名字"
+                              style={{ width: 160 }}
+                            />
+                          </Form.Item>
+                          <Form.Item
+                            name={[field.name, 'valueType']}
+                            rules={[
+                              { required: true, message: '请选择值类型' },
+                            ]}
+                          >
+                            <Select
+                              placeholder="值类型"
+                              style={{ width: 120 }}
+                              options={[
+                                { value: 'string', label: 'string' },
+                                { value: 'int', label: 'int' },
+                                { value: 'bool', label: 'bool' },
+                                { value: 'json', label: 'json' },
+                              ]}
+                            />
+                          </Form.Item>
+                          <Form.Item
+                            name={[field.name, 'accessMode']}
+                            rules={[
+                              { required: true, message: '请选择访问方式' },
+                            ]}
+                          >
+                            <Select
+                              placeholder="访问方式"
+                              style={{ width: 130 }}
+                              options={[
+                                { value: 'reported', label: 'reported' },
+                                { value: 'desired', label: 'desired' },
+                              ]}
+                            />
+                          </Form.Item>
+                          <Button
+                            type="text"
+                            danger
+                            icon={<MinusCircleOutlined />}
+                            onClick={() => remove(field.name)}
+                          />
+                        </Space>
+                      ))}
+                      <Button
+                        type="dashed"
+                        onClick={() =>
+                          add({ valueType: 'string', accessMode: 'reported' })
+                        }
+                        icon={<PlusOutlined />}
+                      >
+                        添加属性
+                      </Button>
+                    </>
+                  )}
+                </Form.List>
+              </Form.Item>
+            </>
+          ) : null}
         </Form>
       </Modal>
     </PageContainer>
